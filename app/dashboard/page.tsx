@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ImageIcon, Plus, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -39,37 +40,41 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <EmptyState
+        <StatCard
           icon={<Users className="size-5" />}
           title="I tuoi modelli"
           count={modelsCount ?? 0}
           description="Salva i modelli AI da riutilizzare nei tuoi shooting."
           actionLabel="Aggiungi modello"
+          actionHref="/dashboard/models"
         />
-        <EmptyState
+        <StatCard
           icon={<ImageIcon className="size-5" />}
           title="I tuoi shooting"
           count={generationsCount ?? 0}
           description="Lo storico delle immagini generate apparirà qui."
           actionLabel="Nuovo shooting"
+          actionHref="/dashboard/generations/new"
         />
       </div>
     </div>
   );
 }
 
-function EmptyState({
+function StatCard({
   icon,
   title,
   count,
   description,
   actionLabel,
+  actionHref,
 }: {
   icon: React.ReactNode;
   title: string;
   count: number;
   description: string;
   actionLabel: string;
+  actionHref: string;
 }) {
   return (
     <Card>
@@ -82,9 +87,11 @@ function EmptyState({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="text-3xl font-semibold tabular-nums">{count}</p>
-        <Button size="sm" variant="outline" className="w-fit" disabled>
-          <Plus className="size-4" />
-          {actionLabel}
+        <Button asChild size="sm" variant="outline" className="w-fit">
+          <Link href={actionHref}>
+            <Plus className="size-4" />
+            {actionLabel}
+          </Link>
         </Button>
       </CardContent>
     </Card>

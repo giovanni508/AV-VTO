@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AV-VTO — Virtual Try-On per negozi di abbigliamento
 
-## Getting Started
+SaaS che genera foto di modelli AI che indossano i tuoi capi. Carichi un capo,
+scegli un modello e ottieni uno shooting professionale in pochi secondi.
 
-First, run the development server:
+Stack: **Next.js (App Router) · Supabase (Auth, Postgres, Storage) · Replicate (IDM-VTON)**.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Funzionalità
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Auth** email/password con Supabase (conferma email, sessioni via middleware).
+- **Crediti**: ogni shooting scala crediti in modo atomico e a prova di
+  race-condition (RPC `consume_credits_for_generation`). Il saldo è modificabile
+  solo lato server.
+- **Modelli**: carica e gestisci le foto dei modelli (bucket privato `models`).
+- **Shooting Virtual Try-On**: capo + modello → immagine generata con Replicate,
+  salvata nel bucket privato `generations`.
+- **RLS** ovunque: ogni utente vede e tocca solo i propri dati.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Installa le dipendenze:
 
-## Learn More
+   ```bash
+   pnpm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Copia `.env.example` in `.env.local` e compila i valori:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   cp .env.example .env.local
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   | Variabile | Dove |
+   |---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | idem (chiave pubblica) |
+   | `SUPABASE_SERVICE_ROLE_KEY` | idem (chiave `service_role`, **segreta**) |
+   | `REPLICATE_API_TOKEN` | https://replicate.com/account/api-tokens |
+   | `REPLICATE_MODEL` | opzionale, default `cuuupid/idm-vton` |
 
-## Deploy on Vercel
+3. Applica lo schema del database (tabelle, RLS, trigger, funzioni crediti) e
+   crea i bucket di storage. Le migration sono in `supabase/migrations/`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   supabase db push          # oppure esegui gli .sql nell'SQL Editor
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. (Solo sviluppo) crea l'utente di test con crediti "infiniti" da
+   `supabase/seed_test_user.sql` — credenziali `test@av-vto.dev` / `Password123!`.
+
+5. Avvia il dev server:
+
+   ```bash
+   pnpm dev
+   ```
+
+   Apri [http://localhost:3000](http://localhost:3000).
+
+## Architettura del flusso di generazione
+
+1. L'utente sceglie un modello e carica un capo (`/dashboard/generations/new`).
+2. La Server Action `createGeneration`:
+   - verifica i crediti, carica il capo nello storage privato;
+   - invia modello + capo a Replicate come data URI (nessun hosting pubblico);
+   - **solo a generazione riuscita** scala i crediti e crea la riga
+     `generations` (RPC atomica);
+   - scarica il risultato, lo salva nel bucket `generations` e scrive l'URL
+     usando la chiave `service_role` (il client non può toccare quella colonna).
+3. Le immagini dei bucket privati sono mostrate via signed URL temporanei.
