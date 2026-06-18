@@ -10,6 +10,9 @@ import { deleteModel } from "@/app/dashboard/models/actions";
 
 export default async function ModelsPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // RLS: solo i modelli dell'utente corrente.
   const { data: models } = await supabase
@@ -43,7 +46,7 @@ export default async function ModelsPage() {
           <CardTitle className="text-base">Aggiungi un modello</CardTitle>
         </CardHeader>
         <CardContent>
-          <AddModelForm />
+          <AddModelForm userId={user!.id} />
         </CardContent>
       </Card>
 

@@ -5,8 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewGenerationForm } from "@/components/new-generation-form";
 import { createClient } from "@/lib/supabase/server";
 
+// La generazione (Replicate) può richiedere ~1 minuto: alziamo il timeout
+// della function. Su Vercel Hobby il massimo è 60s; su Pro fino a 300s.
+export const maxDuration = 60;
+
 export default async function NewGenerationPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // RLS: solo i modelli dell'utente.
   const { data: models } = await supabase
@@ -37,7 +44,7 @@ export default async function NewGenerationPage() {
           <CardTitle className="text-base">Dettagli dello shooting</CardTitle>
         </CardHeader>
         <CardContent>
-          <NewGenerationForm models={models ?? []} />
+          <NewGenerationForm models={models ?? []} userId={user!.id} />
         </CardContent>
       </Card>
     </div>

@@ -56,6 +56,12 @@ Stack: **Next.js (App Router) · Supabase (Auth, Postgres, Storage) · Replicate
 
    Apri [http://localhost:3000](http://localhost:3000).
 
+## Deploy
+
+Per mettere l'app online su Vercel segui **[DEPLOY.md](./DEPLOY.md)** (import del
+repo, variabili d'ambiente, configurazione di Supabase Auth per il dominio di
+produzione).
+
 ## Architettura del flusso di generazione
 
 1. L'utente sceglie un modello e carica un capo (`/dashboard/generations/new`).

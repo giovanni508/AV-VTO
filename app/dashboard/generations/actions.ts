@@ -1,6 +1,5 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -12,7 +11,6 @@ import {
   CREDITS_PER_GENERATION,
   GARMENT_CATEGORIES,
   GARMENT_TYPES,
-  MAX_IMAGE_BYTES,
   STORAGE_BUCKETS,
   type GarmentCategory,
 } from "@/lib/config";
@@ -28,23 +26,14 @@ function isCategory(value: string): value is GarmentCategory {
   return GARMENT_CATEGORIES.some((c) => c.value === value);
 }
 
-function extensionFor(type: string): string {
-  if (type.includes("png")) return "png";
-  if (type.includes("webp")) return "webp";
-  return "jpg";
-}
-
-function fileToDataUri(buffer: Buffer, type: string): string {
-  return `data:${type || "image/jpeg"};base64,${buffer.toString("base64")}`;
-}
-
 /**
- * Pipeline completa di uno shooting Virtual Try-On:
+ * Pipeline completa di uno shooting Virtual Try-On. Il capo è già stato
+ * caricato dal browser nello storage (`garment_path`): qui riceviamo solo il
+ * riferimento, così non passano byte di immagine dalla Server Action.
  *   1. valida input + crediti
- *   2. carica il capo nello storage privato
- *   3. genera con Replicate (modello + capo come data URI)
- *   4. scala i crediti e crea la riga `generations` (RPC atomica)
- *   5. salva il risultato e scrive l'URL (service_role)
+ *   2. genera con Replicate (modello + capo come data URI)
+ *   3. scala i crediti e crea la riga `generations` (RPC atomica)
+ *   4. salva il risultato e scrive l'URL (service_role)
  *
  * I crediti vengono scalati SOLO dopo che Replicate ha prodotto un risultato:
  * così un errore del modello non costa nulla all'utente.
@@ -63,16 +52,15 @@ export async function createGeneration(
   const garmentType = String(formData.get("garment_type") ?? "");
   const category = String(formData.get("category") ?? "");
   const description = String(formData.get("description") ?? "").trim();
-  const garment = formData.get("garment");
+  const garmentPath = String(formData.get("garment_path") ?? "");
 
   if (!modelId) return { error: "Seleziona un modello." };
   if (!isGarmentType(garmentType)) return { error: "Tipo di scatto non valido." };
   if (!isCategory(category)) return { error: "Categoria del capo non valida." };
-  if (!(garment instanceof File) || garment.size === 0) {
-    return { error: "Carica l'immagine del capo." };
-  }
-  if (garment.size > MAX_IMAGE_BYTES) {
-    return { error: "L'immagine del capo supera i 10 MB." };
+  // Il path deve stare nella cartella dell'utente (difesa in profondità: la
+  // RLS lo impedirebbe comunque).
+  if (!garmentPath || !garmentPath.startsWith(`${user.id}/`)) {
+    return { error: "Immagine del capo non valida." };
   }
 
   // Il client service_role serve per scrivere il risultato (vietato al client).
@@ -104,28 +92,17 @@ export async function createGeneration(
     return { error: "Crediti insufficienti per generare lo shooting." };
   }
 
-  // 1. Carica il capo nello storage privato dell'utente.
-  const garmentBuffer = Buffer.from(await garment.arrayBuffer());
-  const garmentPath = `${user.id}/${randomUUID()}.${extensionFor(garment.type)}`;
-  const garmentUpload = await supabase.storage
-    .from(STORAGE_BUCKETS.garments)
-    .upload(garmentPath, garmentBuffer, {
-      contentType: garment.type || "image/jpeg",
-    });
-  if (garmentUpload.error) {
-    return { error: "Upload del capo non riuscito." };
-  }
-
-  // 2. Prepara gli input per Replicate (data URI).
-  const modelDataUri = await storageObjectToDataUri(
-    supabase,
-    STORAGE_BUCKETS.models,
-    model.image_url,
-  );
+  // Prepara gli input per Replicate (data URI letti dallo storage).
+  const [modelDataUri, garmentDataUri] = await Promise.all([
+    storageObjectToDataUri(supabase, STORAGE_BUCKETS.models, model.image_url),
+    storageObjectToDataUri(supabase, STORAGE_BUCKETS.garments, garmentPath),
+  ]);
   if (!modelDataUri) {
     return { error: "Immagine del modello non leggibile." };
   }
-  const garmentDataUri = fileToDataUri(garmentBuffer, garment.type);
+  if (!garmentDataUri) {
+    return { error: "Immagine del capo non leggibile." };
+  }
 
   // 3. Genera con Replicate (può richiedere alcune decine di secondi).
   let outputUrl: string;

@@ -1,33 +1,74 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MAX_IMAGE_BYTES, STORAGE_BUCKETS } from "@/lib/config";
+import { uploadImage } from "@/lib/upload-client";
 import { addModel, type ModelState } from "@/app/dashboard/models/actions";
 
-export function AddModelForm() {
-  const [state, formAction, pending] = useActionState<ModelState, FormData>(
+export function AddModelForm({ userId }: { userId: string }) {
+  const [state, formAction] = useActionState<ModelState, FormData>(
     addModel,
     undefined,
   );
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isSaving, startTransition] = useTransition();
+  const [uploading, setUploading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Dopo un salvataggio riuscito resettiamo il form (operazione sul DOM): il
-  // reset emette l'evento `reset`, che ripulisce l'anteprima via onReset.
+  // Dopo un salvataggio riuscito resettiamo il form (DOM): il reset emette
+  // l'evento `reset`, che ripulisce l'anteprima via onReset.
   useEffect(() => {
     if (state?.ok) {
       formRef.current?.reset();
     }
   }, [state]);
 
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLocalError(null);
+
+    const data = new FormData(event.currentTarget);
+    const file = data.get("image");
+    if (!(file instanceof File) || file.size === 0) {
+      setLocalError("Carica un'immagine del modello.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setLocalError("L'immagine supera i 10 MB.");
+      return;
+    }
+
+    setUploading(true);
+    const { path, error } = await uploadImage(
+      STORAGE_BUCKETS.models,
+      userId,
+      file,
+    );
+    setUploading(false);
+    if (error || !path) {
+      setLocalError("Upload dell'immagine non riuscito. Riprova.");
+      return;
+    }
+
+    const payload = new FormData();
+    payload.set("name", String(data.get("name") ?? ""));
+    payload.set("image_path", path);
+    startTransition(() => formAction(payload));
+  }
+
+  const pending = uploading || isSaving;
+  const error = localError ?? state?.error;
+
   return (
     <form
       ref={formRef}
-      action={formAction}
+      onSubmit={onSubmit}
       onReset={() => setPreview(null)}
       className="flex flex-col gap-4 sm:flex-row sm:items-end"
     >
@@ -67,12 +108,12 @@ export function AddModelForm() {
 
       <Button type="submit" disabled={pending}>
         <UserPlus className="size-4" />
-        {pending ? "Caricamento…" : "Aggiungi modello"}
+        {uploading ? "Caricamento…" : isSaving ? "Salvataggio…" : "Aggiungi modello"}
       </Button>
 
-      {state?.error ? (
+      {error ? (
         <p role="alert" className="text-destructive text-sm sm:self-center">
-          {state.error}
+          {error}
         </p>
       ) : null}
     </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,10 @@ import {
   CREDITS_PER_GENERATION,
   GARMENT_CATEGORIES,
   GARMENT_TYPES,
+  MAX_IMAGE_BYTES,
+  STORAGE_BUCKETS,
 } from "@/lib/config";
+import { uploadImage } from "@/lib/upload-client";
 import {
   createGeneration,
   type GenerationState,
@@ -22,11 +25,20 @@ type ModelOption = { id: string; name: string | null };
 const selectClass =
   "border-input bg-transparent focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px]";
 
-export function NewGenerationForm({ models }: { models: ModelOption[] }) {
-  const [state, formAction, pending] = useActionState<GenerationState, FormData>(
+export function NewGenerationForm({
+  models,
+  userId,
+}: {
+  models: ModelOption[];
+  userId: string;
+}) {
+  const [state, formAction] = useActionState<GenerationState, FormData>(
     createGeneration,
     undefined,
   );
+  const [isGenerating, startTransition] = useTransition();
+  const [uploading, setUploading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
   if (models.length === 0) {
@@ -44,8 +56,49 @@ export function NewGenerationForm({ models }: { models: ModelOption[] }) {
     );
   }
 
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLocalError(null);
+
+    const data = new FormData(event.currentTarget);
+    const file = data.get("garment");
+    if (!(file instanceof File) || file.size === 0) {
+      setLocalError("Carica l'immagine del capo.");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setLocalError("L'immagine del capo supera i 10 MB.");
+      return;
+    }
+
+    // 1. Carica il capo direttamente su Supabase Storage dal browser.
+    setUploading(true);
+    const { path, error } = await uploadImage(
+      STORAGE_BUCKETS.garments,
+      userId,
+      file,
+    );
+    setUploading(false);
+    if (error || !path) {
+      setLocalError("Upload del capo non riuscito. Riprova.");
+      return;
+    }
+
+    // 2. Avvia la generazione passando solo il riferimento allo storage.
+    const payload = new FormData();
+    payload.set("model_id", String(data.get("model_id") ?? ""));
+    payload.set("garment_type", String(data.get("garment_type") ?? ""));
+    payload.set("category", String(data.get("category") ?? ""));
+    payload.set("description", String(data.get("description") ?? ""));
+    payload.set("garment_path", path);
+    startTransition(() => formAction(payload));
+  }
+
+  const pending = uploading || isGenerating;
+  const error = localError ?? state?.error;
+
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form onSubmit={onSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <Label htmlFor="model_id">Modello</Label>
         <select id="model_id" name="model_id" required className={selectClass}>
@@ -119,23 +172,27 @@ export function NewGenerationForm({ models }: { models: ModelOption[] }) {
         />
       </div>
 
-      {state?.error ? (
+      {error ? (
         <p role="alert" className="text-destructive text-sm" aria-live="polite">
-          {state.error}
+          {error}
         </p>
       ) : null}
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
           <Sparkles className="size-4" />
-          {pending ? "Generazione in corso…" : "Genera shooting"}
+          {uploading
+            ? "Caricamento capo…"
+            : isGenerating
+              ? "Generazione in corso…"
+              : "Genera shooting"}
         </Button>
         <span className="text-muted-foreground text-sm">
           Costo: {CREDITS_PER_GENERATION} crediti
         </span>
       </div>
 
-      {pending ? (
+      {isGenerating ? (
         <p className="text-muted-foreground text-sm">
           Il try-on può richiedere fino a un paio di minuti. Non chiudere la
           pagina.

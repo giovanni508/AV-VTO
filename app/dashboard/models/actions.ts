@@ -1,21 +1,17 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { MAX_IMAGE_BYTES, STORAGE_BUCKETS } from "@/lib/config";
+import { STORAGE_BUCKETS } from "@/lib/config";
 
 export type ModelState = { error?: string; ok?: boolean } | undefined;
 
-function extensionFor(type: string): string {
-  if (type.includes("png")) return "png";
-  if (type.includes("webp")) return "webp";
-  return "jpg";
-}
-
-/** Carica una foto di modello nello storage e crea la riga in ai_models. */
+/**
+ * Crea la riga ai_models. La foto è già stata caricata dal browser nello
+ * storage (`image_path`): qui riceviamo solo il riferimento.
+ */
 export async function addModel(
   _prev: ModelState,
   formData: FormData,
@@ -27,33 +23,21 @@ export async function addModel(
   if (!user) redirect("/login");
 
   const name = String(formData.get("name") ?? "").trim();
-  const image = formData.get("image");
+  const imagePath = String(formData.get("image_path") ?? "");
 
-  if (!(image instanceof File) || image.size === 0) {
-    return { error: "Carica un'immagine del modello." };
-  }
-  if (image.size > MAX_IMAGE_BYTES) {
-    return { error: "L'immagine supera i 10 MB." };
-  }
-
-  const path = `${user.id}/${randomUUID()}.${extensionFor(image.type)}`;
-  const buffer = Buffer.from(await image.arrayBuffer());
-
-  const upload = await supabase.storage
-    .from(STORAGE_BUCKETS.models)
-    .upload(path, buffer, { contentType: image.type || "image/jpeg" });
-  if (upload.error) {
-    return { error: "Upload dell'immagine non riuscito." };
+  // Difesa in profondità: il path deve stare nella cartella dell'utente.
+  if (!imagePath || !imagePath.startsWith(`${user.id}/`)) {
+    return { error: "Immagine del modello non valida." };
   }
 
   const insert = await supabase.from("ai_models").insert({
     user_id: user.id,
-    image_url: path,
+    image_url: imagePath,
     name: name || null,
   });
   if (insert.error) {
-    // Rollback: niente riga DB => non lasciamo file orfani nello storage.
-    await supabase.storage.from(STORAGE_BUCKETS.models).remove([path]);
+    // Niente riga DB => non lasciamo file orfani nello storage.
+    await supabase.storage.from(STORAGE_BUCKETS.models).remove([imagePath]);
     return { error: "Salvataggio del modello non riuscito." };
   }
 
