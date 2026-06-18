@@ -29,7 +29,12 @@ begin
       instance_id, id, aud, role, email,
       encrypted_password, email_confirmed_at,
       created_at, updated_at,
-      raw_app_meta_data, raw_user_meta_data
+      raw_app_meta_data, raw_user_meta_data,
+      -- Questi token DEVONO essere '' (non NULL): GoTrue li legge come stringhe
+      -- e con NULL il login fallisce ("converting NULL to string is unsupported").
+      confirmation_token, recovery_token, email_change,
+      email_change_token_new, email_change_token_current,
+      phone_change, phone_change_token, reauthentication_token
     ) values (
       '00000000-0000-0000-0000-000000000000',
       v_user_id, 'authenticated', 'authenticated', v_email,
@@ -38,7 +43,10 @@ begin
       extensions.crypt('Password123!', extensions.gen_salt('bf')),
       now(), now(), now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
-      '{}'::jsonb
+      '{}'::jsonb,
+      '', '', '',
+      '', '',
+      '', '', ''
     );
 
     -- 2. Identity collegata: necessaria per il login email/password.
