@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Clock, Plus } from "lucide-react";
+import { Clock, ImageIcon, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
 import { GARMENT_TYPES, STORAGE_BUCKETS } from "@/lib/config";
@@ -95,10 +96,19 @@ export default async function GenerationsPage() {
           ))}
         </ul>
       ) : (
-        <div className="text-muted-foreground rounded-lg border border-dashed p-10 text-center text-sm">
-          Ancora nessuno shooting. Crea il primo con il pulsante “Nuovo
-          shooting”.
-        </div>
+        <EmptyState
+          icon={<ImageIcon className="size-6" />}
+          title="Ancora nessuno shooting"
+          description="Carica un capo e genera il tuo primo scatto: con modello o packshot per l'e-commerce."
+          action={
+            <Button asChild variant="brand" size="sm">
+              <Link href="/dashboard/generations/new">
+                <Plus className="size-4" />
+                Crea il primo shooting
+              </Link>
+            </Button>
+          }
+        />
       )}
     </div>
   );

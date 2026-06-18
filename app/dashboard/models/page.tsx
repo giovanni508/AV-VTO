@@ -1,8 +1,9 @@
-import { Trash2 } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddModelForm } from "@/components/add-model-form";
+import { EmptyState } from "@/components/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
 import { STORAGE_BUCKETS } from "@/lib/config";
@@ -88,10 +89,11 @@ export default async function ModelsPage() {
           ))}
         </ul>
       ) : (
-        <div className="text-muted-foreground rounded-lg border border-dashed p-10 text-center text-sm">
-          Nessun modello ancora. Aggiungine uno qui sopra per iniziare a generare
-          shooting.
-        </div>
+        <EmptyState
+          icon={<Users className="size-6" />}
+          title="Nessun modello ancora"
+          description="Aggiungi qui sopra la foto di un modello per iniziare a generare shooting con modello."
+        />
       )}
     </div>
   );

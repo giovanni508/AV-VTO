@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { AgencyCard } from "@/components/agency-card";
+import { NavigationProgress } from "@/components/navigation-progress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <div
+          aria-hidden
+          className="app-aurora pointer-events-none fixed inset-0 -z-10"
+        />
+        <NavigationProgress />
         {children}
         <AgencyCard />
       </body>

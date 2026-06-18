@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { ImageIcon, LayoutDashboard, Users } from "lucide-react";
 
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -11,6 +12,12 @@ const NAV = [
   { href: "/dashboard/models", label: "I tuoi modelli", icon: Users },
   { href: "/dashboard/generations", label: "Shooting", icon: ImageIcon },
 ];
+
+function NavSpinner({ active }: { active: boolean }) {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return <Spinner className={cn("ml-auto size-3.5", active && "text-white")} />;
+}
 
 export function DashboardNav() {
   const pathname = usePathname();
@@ -37,10 +44,11 @@ export function DashboardNav() {
             <Icon
               className={cn(
                 "size-4 transition-transform duration-200 group-hover:scale-110",
-                active ? "text-white" : "",
+                active && "text-white",
               )}
             />
             {label}
+            <NavSpinner active={active} />
           </Link>
         );
       })}

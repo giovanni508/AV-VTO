@@ -4,6 +4,7 @@ import { Coins } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardLayout({
@@ -33,9 +34,10 @@ export default async function DashboardLayout({
       <header className="bg-background/80 sticky top-0 z-30 flex items-center justify-between border-b px-6 py-3 backdrop-blur">
         <Link
           href="/dashboard"
-          className="text-lg font-bold tracking-tight transition-opacity hover:opacity-80"
+          className="transition-opacity hover:opacity-80"
+          aria-label="AV-VTO, vai alla dashboard"
         >
-          AV<span className="text-gradient">·VTO</span>
+          <Logo />
         </Link>
         <div className="flex items-center gap-3">
           <span className="brand-gradient shadow-brand-700/30 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm">
