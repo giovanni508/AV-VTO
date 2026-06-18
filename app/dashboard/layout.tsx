@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Coins, ImageIcon, LayoutDashboard, Users } from "lucide-react";
+import { Coins } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DashboardNav } from "@/components/dashboard-nav";
 import { createClient } from "@/lib/supabase/server";
-
-const NAV = [
-  { href: "/dashboard", label: "Panoramica", icon: LayoutDashboard },
-  { href: "/dashboard/models", label: "I tuoi modelli", icon: Users },
-  { href: "/dashboard/generations", label: "Shooting", icon: ImageIcon },
-];
 
 export default async function DashboardLayout({
   children,
@@ -35,14 +30,17 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between border-b px-6 py-3">
-        <Link href="/dashboard" className="font-semibold tracking-tight">
-          AV·VTO
+      <header className="bg-background/80 sticky top-0 z-30 flex items-center justify-between border-b px-6 py-3 backdrop-blur">
+        <Link
+          href="/dashboard"
+          className="text-lg font-bold tracking-tight transition-opacity hover:opacity-80"
+        >
+          AV<span className="text-gradient">·VTO</span>
         </Link>
         <div className="flex items-center gap-3">
-          <span className="bg-muted inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium">
+          <span className="brand-gradient shadow-brand-700/30 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm">
             <Coins className="size-4" />
-            {credits} crediti
+            {credits.toLocaleString("it-IT")}
           </span>
           <span className="text-muted-foreground hidden text-sm sm:inline">
             {profile?.email ?? user.email}
@@ -57,18 +55,7 @@ export default async function DashboardLayout({
 
       <div className="flex flex-1">
         <aside className="hidden w-56 shrink-0 border-r p-4 sm:block">
-          <nav className="flex flex-col gap-1">
-            {NAV.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-              >
-                <Icon className="size-4" />
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <DashboardNav />
         </aside>
 
         <main className="flex-1 p-6">{children}</main>

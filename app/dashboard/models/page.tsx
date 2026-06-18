@@ -55,7 +55,7 @@ export default async function ModelsPage() {
           {withThumbs.map((m) => (
             <li
               key={m.id}
-              className="group relative overflow-hidden rounded-lg border"
+              className="group hover:border-brand-400/60 relative overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-md"
             >
               <div className="bg-muted aspect-[3/4] w-full">
                 {m.thumbUrl ? (

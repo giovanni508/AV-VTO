@@ -35,7 +35,8 @@ export default async function NewGenerationPage() {
           Nuovo shooting
         </h1>
         <p className="text-muted-foreground mt-1">
-          Scegli un modello, carica un capo e genera l&apos;immagine finale.
+          Genera il capo indossato da un modello, oppure un packshot su sfondo
+          pulito per l&apos;e-commerce.
         </p>
       </div>
 

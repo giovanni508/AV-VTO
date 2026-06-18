@@ -77,9 +77,9 @@ function StatCard({
   actionHref: string;
 }) {
   return (
-    <Card>
+    <Card className="hover:border-brand-400/50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
       <CardHeader>
-        <div className="text-muted-foreground flex items-center gap-2">
+        <div className="text-brand-700 flex items-center gap-2">
           {icon}
           <CardTitle className="text-base">{title}</CardTitle>
         </div>

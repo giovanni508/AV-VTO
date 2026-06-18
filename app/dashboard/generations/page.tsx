@@ -65,7 +65,7 @@ export default async function GenerationsPage() {
             <li key={g.id}>
               <Link
                 href={`/dashboard/generations/${g.id}`}
-                className="hover:border-foreground/30 block overflow-hidden rounded-lg border transition-colors"
+                className="hover:border-brand-400/60 block overflow-hidden rounded-lg border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="bg-muted aspect-[3/4] w-full">
                   {g.imageUrl ? (

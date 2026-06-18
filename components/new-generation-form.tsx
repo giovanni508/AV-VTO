@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
-import { Sparkles } from "lucide-react";
+import { Shirt, Sparkles, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
 import {
   CREDITS_PER_GENERATION,
+  CREDITS_PER_PRODUCT_SHOT,
   GARMENT_CATEGORIES,
   GARMENT_TYPES,
   MAX_IMAGE_BYTES,
   STORAGE_BUCKETS,
+  type GenerationMode,
 } from "@/lib/config";
 import { uploadImage } from "@/lib/upload-client";
 import {
@@ -40,21 +44,11 @@ export function NewGenerationForm({
   const [uploading, setUploading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [mode, setMode] = useState<GenerationMode>("with_model");
 
-  if (models.length === 0) {
-    return (
-      <div className="text-muted-foreground rounded-lg border border-dashed p-10 text-center text-sm">
-        Prima di generare uno shooting devi aggiungere almeno un modello.{" "}
-        <Link
-          href="/dashboard/models"
-          className="text-foreground font-medium underline-offset-4 hover:underline"
-        >
-          Aggiungi un modello
-        </Link>
-        .
-      </div>
-    );
-  }
+  const withModel = mode === "with_model";
+  const noModels = withModel && models.length === 0;
+  const cost = withModel ? CREDITS_PER_GENERATION : CREDITS_PER_PRODUCT_SHOT;
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,11 +80,14 @@ export function NewGenerationForm({
 
     // 2. Avvia la generazione passando solo il riferimento allo storage.
     const payload = new FormData();
-    payload.set("model_id", String(data.get("model_id") ?? ""));
+    payload.set("mode", mode);
     payload.set("garment_type", String(data.get("garment_type") ?? ""));
-    payload.set("category", String(data.get("category") ?? ""));
     payload.set("description", String(data.get("description") ?? ""));
     payload.set("garment_path", path);
+    if (withModel) {
+      payload.set("model_id", String(data.get("model_id") ?? ""));
+      payload.set("category", String(data.get("category") ?? ""));
+    }
     startTransition(() => formAction(payload));
   }
 
@@ -99,16 +96,54 @@ export function NewGenerationForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="model_id">Modello</Label>
-        <select id="model_id" name="model_id" required className={selectClass}>
-          {models.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name ?? "Senza nome"}
-            </option>
-          ))}
-        </select>
+      {/* Switch modalità */}
+      <div className="bg-muted grid grid-cols-2 gap-1 rounded-lg p-1">
+        <ModeTab
+          active={withModel}
+          onClick={() => setMode("with_model")}
+          icon={<UserRound className="size-4" />}
+          label="Con modello"
+          hint={`${CREDITS_PER_GENERATION} cr.`}
+        />
+        <ModeTab
+          active={!withModel}
+          onClick={() => setMode("no_model")}
+          icon={<Shirt className="size-4" />}
+          label="Senza modello"
+          hint={`${CREDITS_PER_PRODUCT_SHOT} cr.`}
+        />
       </div>
+      <p className="text-muted-foreground -mt-2 text-sm">
+        {withModel
+          ? "Il capo verrà indossato dal modello scelto (Virtual Try-On)."
+          : "Packshot e-commerce: il capo viene isolato su sfondo pulito."}
+      </p>
+
+      {withModel ? (
+        noModels ? (
+          <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
+            Per la modalità con modello serve almeno un modello.{" "}
+            <Link
+              href="/dashboard/models"
+              className="text-primary font-medium underline-offset-4 hover:underline"
+            >
+              Aggiungine uno
+            </Link>{" "}
+            oppure passa a “Senza modello”.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="model_id">Modello</Label>
+            <select id="model_id" name="model_id" required className={selectClass}>
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name ?? "Senza nome"}
+                </option>
+              ))}
+            </select>
+          </div>
+        )
+      ) : null}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="garment">Foto del capo</Label>
@@ -134,16 +169,18 @@ export function NewGenerationForm({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="category">Categoria del capo</Label>
-          <select id="category" name="category" required className={selectClass}>
-            {GARMENT_CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {withModel ? (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="category">Categoria del capo</Label>
+            <select id="category" name="category" required className={selectClass}>
+              {GARMENT_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="garment_type">Com&apos;è fotografato</Label>
@@ -179,8 +216,8 @@ export function NewGenerationForm({
       ) : null}
 
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
-          <Sparkles className="size-4" />
+        <Button type="submit" variant="brand" disabled={pending || noModels}>
+          {pending ? <Spinner className="text-white" /> : <Sparkles className="size-4" />}
           {uploading
             ? "Caricamento capo…"
             : isGenerating
@@ -188,16 +225,49 @@ export function NewGenerationForm({
               : "Genera shooting"}
         </Button>
         <span className="text-muted-foreground text-sm">
-          Costo: {CREDITS_PER_GENERATION} crediti
+          Costo: <span className="text-foreground font-medium">{cost} crediti</span>
         </span>
       </div>
 
       {isGenerating ? (
         <p className="text-muted-foreground text-sm">
-          Il try-on può richiedere fino a un paio di minuti. Non chiudere la
-          pagina.
+          Può richiedere fino a un paio di minuti. Non chiudere la pagina.
         </p>
       ) : null}
     </form>
+  );
+}
+
+function ModeTab({
+  active,
+  onClick,
+  icon,
+  label,
+  hint,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
+        active
+          ? "brand-gradient text-white shadow-sm"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {icon}
+      {label}
+      <span className={cn("text-xs", active ? "text-white/80" : "text-muted-foreground")}>
+        {hint}
+      </span>
+    </button>
   );
 }
