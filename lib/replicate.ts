@@ -1,4 +1,4 @@
-import { REPLICATE_MODEL } from "@/lib/config";
+import { REPLICATE_MODEL, REPLICATE_PRODUCT_MODEL } from "@/lib/config";
 
 /**
  * Client minimale per Replicate (senza dipendenze: solo fetch).
@@ -52,36 +52,77 @@ function authToken(): string {
 }
 
 /**
- * Genera un'immagine di Virtual Try-On e ritorna l'URL del risultato.
- * Lancia un'eccezione con messaggio leggibile in caso di errore/timeout.
+ * Genera un'immagine di Virtual Try-On (capo indossato dal modello) e ritorna
+ * l'URL del risultato.
  */
 export async function generateTryOn(input: TryOnInput): Promise<string> {
-  const [owner, name] = REPLICATE_MODEL.split("/");
-  if (!owner || !name) {
-    throw new Error(`REPLICATE_MODEL non valido: "${REPLICATE_MODEL}".`);
-  }
+  const prediction = await runModel(REPLICATE_MODEL, {
+    human_img: input.humanImage,
+    garm_img: input.garmentImage,
+    garment_des: input.description || "capo di abbigliamento",
+    category: input.category,
+  });
+  return extractImageUrl(prediction.output);
+}
 
-  const res = await fetch(
-    `${REPLICATE_API}/models/${owner}/${name}/predictions`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${authToken()}`,
-        "Content-Type": "application/json",
-        // Chiede a Replicate di attendere (fino a ~60s) prima di rispondere:
-        // spesso la predizione è già pronta e saltiamo del tutto il polling.
-        Prefer: "wait",
-      },
-      body: JSON.stringify({
-        input: {
-          human_img: input.humanImage,
-          garm_img: input.garmentImage,
-          garment_des: input.description || "capo di abbigliamento",
-          category: input.category,
-        },
-      }),
+/**
+ * Genera un packshot e-commerce senza modello: isola il capo rimuovendo lo
+ * sfondo. Ritorna l'URL dell'immagine risultante.
+ */
+export async function generateProductShot(garmentImage: string): Promise<string> {
+  const prediction = await runModel(REPLICATE_PRODUCT_MODEL, {
+    image: garmentImage,
+  });
+  return extractImageUrl(prediction.output);
+}
+
+/**
+ * Risolve l'hash di versione di un modello. Accetta sia "owner/nome" (legge la
+ * versione di default via API) sia "owner/nome:hash" (versione fissata).
+ *
+ * Necessario perché l'endpoint /v1/models/.../predictions vale solo per i
+ * modelli "ufficiali"; per quelli della community (es. IDM-VTON) serve la
+ * versione esplicita su /v1/predictions, altrimenti si riceve un 404.
+ */
+async function resolveVersion(model: string): Promise<string> {
+  const [path, pinned] = model.split(":");
+  if (pinned) return pinned;
+
+  const res = await fetch(`${REPLICATE_API}/models/${path}`, {
+    headers: { Authorization: `Bearer ${authToken()}` },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Modello Replicate non trovato: "${path}" (HTTP ${res.status}).`,
+    );
+  }
+  const data = (await res.json()) as { latest_version?: { id?: string } };
+  const version = data.latest_version?.id;
+  if (!version) {
+    throw new Error(`Il modello "${path}" non ha una versione disponibile.`);
+  }
+  return version;
+}
+
+/** Lancia un modello (per versione) e attende il completamento. */
+async function runModel(
+  model: string,
+  input: Record<string, unknown>,
+): Promise<Prediction> {
+  const version = await resolveVersion(model);
+
+  const res = await fetch(`${REPLICATE_API}/predictions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${authToken()}`,
+      "Content-Type": "application/json",
+      // Chiede a Replicate di attendere (fino a ~60s) prima di rispondere:
+      // spesso la predizione è già pronta e saltiamo del tutto il polling.
+      Prefer: "wait",
     },
-  );
+    body: JSON.stringify({ version, input }),
+  });
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -90,16 +131,16 @@ export async function generateTryOn(input: TryOnInput): Promise<string> {
     );
   }
 
-  let prediction = (await res.json()) as Prediction;
-  prediction = await waitForCompletion(prediction);
+  const prediction = await waitForCompletion((await res.json()) as Prediction);
 
   if (prediction.status !== "succeeded") {
     throw new Error(
-      prediction.error || `Generazione non riuscita (stato: ${prediction.status}).`,
+      prediction.error ||
+        `Generazione non riuscita (stato: ${prediction.status}).`,
     );
   }
 
-  return extractImageUrl(prediction.output);
+  return prediction;
 }
 
 async function waitForCompletion(prediction: Prediction): Promise<Prediction> {
@@ -125,7 +166,7 @@ async function waitForCompletion(prediction: Prediction): Promise<Prediction> {
   return current;
 }
 
-/** L'output dei modelli VTO è di solito una stringa URL o un array di URL. */
+/** L'output dei modelli è di solito una stringa URL o un array di URL. */
 function extractImageUrl(output: unknown): string {
   if (typeof output === "string") return output;
   if (Array.isArray(output) && typeof output[0] === "string") return output[0];
