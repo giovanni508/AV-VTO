@@ -53,10 +53,11 @@ export default async function ModelsPage() {
 
       {withThumbs.length > 0 ? (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {withThumbs.map((m) => (
+          {withThumbs.map((m, i) => (
             <li
               key={m.id}
-              className="group hover:border-brand-400/60 relative overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-md"
+              className="group animate-fade-up hover:border-brand-400/60 relative overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-md"
+              style={{ animationDelay: `${i * 50}ms` }}
             >
               <div className="bg-muted aspect-[3/4] w-full">
                 {m.thumbUrl ? (

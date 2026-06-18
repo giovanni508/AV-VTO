@@ -12,7 +12,7 @@ const buttonVariants = cva(
         default:
           "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
         brand:
-          "brand-gradient text-white shadow-sm shadow-brand-700/30 hover:shadow-md hover:shadow-brand-700/40 hover:brightness-105",
+          "brand-gradient text-white shadow-sm shadow-brand-700/30 hover:shadow-md hover:shadow-brand-700/40 hover:brightness-105 relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:transition-transform before:duration-700 hover:before:translate-x-full before:content-['']",
         destructive:
           "bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive/90",
         outline:

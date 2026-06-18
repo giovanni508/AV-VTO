@@ -1,99 +1,261 @@
 import Link from "next/link";
-import { ImageIcon, Plus, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Clock,
+  Coins,
+  ImageIcon,
+  Plus,
+  Sparkles,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CountUp } from "@/components/count-up";
+import { EmptyState } from "@/components/empty-state";
 import { createClient } from "@/lib/supabase/server";
+import { createSignedUrl } from "@/lib/storage";
+import { GARMENT_TYPES, STORAGE_BUCKETS } from "@/lib/config";
+
+const TYPE_LABELS = Object.fromEntries(GARMENT_TYPES.map((t) => [t.value, t.label]));
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const uid = user!.id;
 
-  // Le query rispettano la RLS: ritornano solo i dati dell'utente corrente.
-  const [{ count: modelsCount }, { count: generationsCount }] =
-    await Promise.all([
-      supabase
-        .from("ai_models")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user!.id),
-      supabase
-        .from("generations")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user!.id),
-    ]);
+  // Tutte le query rispettano la RLS: solo i dati dell'utente corrente.
+  const [
+    { data: profile },
+    { count: modelsCount },
+    { count: generationsCount },
+    { data: costs },
+    { data: recentGenerations },
+    { data: recentModels },
+  ] = await Promise.all([
+    supabase.from("users").select("credits_balance").eq("id", uid).single(),
+    supabase
+      .from("ai_models")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", uid),
+    supabase
+      .from("generations")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", uid),
+    supabase.from("generations").select("cost_in_credits"),
+    supabase
+      .from("generations")
+      .select("id, garment_type, generated_image_url, created_at")
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("ai_models")
+      .select("id, name, image_url")
+      .order("created_at", { ascending: false })
+      .limit(4),
+  ]);
 
-  return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Panoramica</h1>
-        <p className="text-muted-foreground mt-1">
-          Crea un nuovo shooting o gestisci i tuoi modelli.
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <StatCard
-          icon={<Users className="size-5" />}
-          title="I tuoi modelli"
-          count={modelsCount ?? 0}
-          description="Salva i modelli AI da riutilizzare nei tuoi shooting."
-          actionLabel="Aggiungi modello"
-          actionHref="/dashboard/models"
-        />
-        <StatCard
-          icon={<ImageIcon className="size-5" />}
-          title="I tuoi shooting"
-          count={generationsCount ?? 0}
-          description="Lo storico delle immagini generate apparirà qui."
-          actionLabel="Nuovo shooting"
-          actionHref="/dashboard/generations/new"
-        />
-      </div>
-    </div>
+  const creditsUsed = (costs ?? []).reduce(
+    (sum, row) => sum + (row.cost_in_credits ?? 0),
+    0,
   );
-}
 
-function StatCard({
-  icon,
-  title,
-  count,
-  description,
-  actionLabel,
-  actionHref,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  count: number;
-  description: string;
-  actionLabel: string;
-  actionHref: string;
-}) {
+  const generations = await Promise.all(
+    (recentGenerations ?? []).map(async (g) => ({
+      ...g,
+      imageUrl: await createSignedUrl(
+        supabase,
+        STORAGE_BUCKETS.generations,
+        g.generated_image_url,
+      ),
+    })),
+  );
+  const models = await Promise.all(
+    (recentModels ?? []).map(async (m) => ({
+      ...m,
+      thumbUrl: await createSignedUrl(
+        supabase,
+        STORAGE_BUCKETS.models,
+        m.image_url,
+      ),
+    })),
+  );
+
+  const stats = [
+    {
+      icon: Coins,
+      label: "Crediti disponibili",
+      value: profile?.credits_balance ?? 0,
+    },
+    { icon: ImageIcon, label: "Shooting totali", value: generationsCount ?? 0 },
+    { icon: Users, label: "Modelli salvati", value: modelsCount ?? 0 },
+    { icon: TrendingUp, label: "Crediti usati", value: creditsUsed },
+  ];
+
   return (
-    <Card className="hover:border-brand-400/50 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
-      <CardHeader>
-        <div className="text-brand-700 flex items-center gap-2">
-          {icon}
-          <CardTitle className="text-base">{title}</CardTitle>
+    <div className="mx-auto flex max-w-5xl flex-col gap-8">
+      {/* Header */}
+      <div className="animate-fade-up flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Panoramica</h1>
+          <p className="text-muted-foreground mt-1">
+            Crea un nuovo shooting o gestisci i tuoi modelli.
+          </p>
         </div>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <p className="text-3xl font-semibold tabular-nums">{count}</p>
-        <Button asChild size="sm" variant="outline" className="w-fit">
-          <Link href={actionHref}>
-            <Plus className="size-4" />
-            {actionLabel}
+        <Button asChild variant="brand" size="lg">
+          <Link href="/dashboard/generations/new">
+            <Sparkles className="size-4" />
+            Nuovo shooting
           </Link>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Statistiche */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {stats.map((s, i) => (
+          <div
+            key={s.label}
+            className="animate-fade-up bg-card hover:shadow-brand hover:border-brand-400/50 rounded-xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5"
+            style={{ animationDelay: `${i * 70 + 60}ms` }}
+          >
+            <div className="brand-gradient mb-3 inline-flex size-9 items-center justify-center rounded-lg text-white shadow-sm">
+              <s.icon className="size-5" />
+            </div>
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
+              <CountUp value={s.value} />
+            </p>
+            <p className="text-muted-foreground mt-1 text-sm">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Ultimi shooting */}
+      <section
+        className="animate-fade-up flex flex-col gap-4"
+        style={{ animationDelay: "320ms" }}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">Ultimi shooting</h2>
+          {generations.length > 0 ? (
+            <Link
+              href="/dashboard/generations"
+              className="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline"
+            >
+              Vedi tutti
+              <ArrowRight className="size-3.5" />
+            </Link>
+          ) : null}
+        </div>
+
+        {generations.length > 0 ? (
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {generations.map((g, i) => (
+              <li
+                key={g.id}
+                className="animate-fade-up"
+                style={{ animationDelay: `${i * 70 + 360}ms` }}
+              >
+                <Link
+                  href={`/dashboard/generations/${g.id}`}
+                  className="hover:border-brand-400/60 block overflow-hidden rounded-lg border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="bg-muted aspect-[3/4] w-full">
+                    {g.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={g.imageUrl}
+                        alt="Shooting generato"
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-muted-foreground flex size-full flex-col items-center justify-center gap-1 text-xs">
+                        <Clock className="size-4" />
+                        In lavorazione
+                      </div>
+                    )}
+                  </div>
+                  <p className="truncate px-2 py-1.5 text-xs">
+                    {TYPE_LABELS[g.garment_type] ?? g.garment_type}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState
+            icon={<ImageIcon className="size-6" />}
+            title="Ancora nessuno shooting"
+            description="Genera il tuo primo scatto: con modello o packshot per l'e-commerce."
+            action={
+              <Button asChild variant="brand" size="sm">
+                <Link href="/dashboard/generations/new">
+                  <Plus className="size-4" />
+                  Crea il primo shooting
+                </Link>
+              </Button>
+            }
+          />
+        )}
+      </section>
+
+      {/* I tuoi modelli */}
+      <section
+        className="animate-fade-up flex flex-col gap-4"
+        style={{ animationDelay: "420ms" }}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">I tuoi modelli</h2>
+          <Link
+            href="/dashboard/models"
+            className="text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline"
+          >
+            Gestisci
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
+
+        {models.length > 0 ? (
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {models.map((m, i) => (
+              <li
+                key={m.id}
+                className="animate-fade-up hover:border-brand-400/60 overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-md"
+                style={{ animationDelay: `${i * 70 + 460}ms` }}
+              >
+                <div className="bg-muted aspect-[3/4] w-full">
+                  {m.thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={m.thumbUrl}
+                      alt={m.name ?? "Modello"}
+                      className="size-full object-cover"
+                    />
+                  ) : null}
+                </div>
+                <p className="truncate px-2 py-1.5 text-xs font-medium">
+                  {m.name ?? "Senza nome"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState
+            icon={<Users className="size-6" />}
+            title="Nessun modello ancora"
+            description="Aggiungi la foto di un modello per generare shooting con modello."
+            action={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/dashboard/models">
+                  <Plus className="size-4" />
+                  Aggiungi modello
+                </Link>
+              </Button>
+            }
+          />
+        )}
+      </section>
+    </div>
   );
 }

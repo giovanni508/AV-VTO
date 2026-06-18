@@ -62,8 +62,12 @@ export default async function GenerationsPage() {
 
       {items.length > 0 ? (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {items.map((g) => (
-            <li key={g.id}>
+          {items.map((g, i) => (
+            <li
+              key={g.id}
+              className="animate-fade-up"
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
               <Link
                 href={`/dashboard/generations/${g.id}`}
                 className="hover:border-brand-400/60 block overflow-hidden rounded-lg border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
