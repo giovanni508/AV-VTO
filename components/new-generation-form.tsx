@@ -194,8 +194,9 @@ export function NewGenerationForm({
           />
         </div>
 
-        {/* Controlli */}
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/10 pt-3">
+        {/* Controlli: lane scrollabile + bottone Genera fisso a destra */}
+        <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+          <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-0.5">
           {/* Modalità */}
           <div className="inline-flex rounded-full border border-white/10 bg-white/5 p-0.5 text-xs">
             <button
@@ -302,12 +303,13 @@ export function NewGenerationForm({
               <Plus className="size-3.5" />
             </button>
           </div>
+          </div>
 
-          {/* Genera */}
+          {/* Genera (fisso a destra) */}
           <button
             type="submit"
             disabled={!canSubmit}
-            className="brand-gradient ml-auto inline-flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+            className="brand-gradient inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
           >
             {pending ? (
               <Spinner className="text-white" />

@@ -229,6 +229,14 @@
   .spotlight-card:hover::before {
     opacity: 1;
   }
+  /* Nasconde la scrollbar mantenendo lo scroll (lane orizzontale del composer). */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
