@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewGenerationForm } from "@/components/new-generation-form";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,7 +21,7 @@ export default async function NewGenerationPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
         <Link
           href="/dashboard/generations"
@@ -35,19 +34,12 @@ export default async function NewGenerationPage() {
           Nuovo shooting
         </h1>
         <p className="text-muted-foreground mt-1">
-          Genera il capo indossato da un modello, oppure un packshot su sfondo
-          pulito per l&apos;e-commerce.
+          Allega un capo, scegli le impostazioni e genera: con modello o packshot
+          su sfondo pulito per l&apos;e-commerce.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Dettagli dello shooting</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NewGenerationForm models={models ?? []} userId={user!.id} />
-        </CardContent>
-      </Card>
+      <NewGenerationForm models={models ?? []} userId={user!.id} />
     </div>
   );
 }

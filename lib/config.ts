@@ -9,6 +9,9 @@ export const CREDITS_PER_GENERATION = 10;
 /** Crediti scalati per un packshot senza modello (sfondo pulito). */
 export const CREDITS_PER_PRODUCT_SHOT = 4;
 
+/** Numero massimo di variazioni generabili in un colpo solo. */
+export const MAX_VARIATIONS = 4;
+
 /**
  * Modalità di generazione:
  *  - with_model: il capo indossato da un modello (Virtual Try-On).

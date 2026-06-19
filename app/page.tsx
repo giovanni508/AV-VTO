@@ -15,8 +15,7 @@ import { Reveal } from "@/components/marketing/reveal";
 import { InteractiveCard } from "@/components/marketing/interactive-card";
 import { createClient } from "@/lib/supabase/server";
 
-const HERO_VIDEO =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260618_174853_aac61aa2-0f3f-4cf1-bc78-7f657dd11164.mp4";
+const HERO_VIDEO = "/hero.mp4";
 
 const IMG = {
   modelA: "/marketing/model-a.png",
