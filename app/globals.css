@@ -88,6 +88,8 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-inter: var(--font-inter-src), "Inter", system-ui, sans-serif;
+  --font-askan: "Askan Light", var(--font-geist-sans), serif;
 
   --animate-float: float 6s ease-in-out infinite;
   --animate-fade-up: fade-up 0.5s ease-out both;

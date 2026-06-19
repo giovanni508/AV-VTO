@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 
 /**
@@ -12,6 +13,10 @@ import { ArrowUpRight } from "lucide-react";
  */
 export function AgencyCard() {
   const [imgOk, setImgOk] = useState(true);
+  const pathname = usePathname();
+
+  // Sulla landing (hero a tutto schermo) la card darebbe fastidio: nascondila.
+  if (pathname === "/") return null;
 
   return (
     <a
