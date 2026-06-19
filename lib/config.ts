@@ -47,9 +47,9 @@ export const STORAGE_BUCKETS = {
  * `generations.garment_type` (mannequin | flat_lay | model).
  */
 export const GARMENT_TYPES = [
-  { value: "model", label: "Indossato da un modello" },
-  { value: "mannequin", label: "Su manichino" },
-  { value: "flat_lay", label: "Flat lay (capo steso)" },
+  { value: "model", label: "Indossato" },
+  { value: "mannequin", label: "Manichino" },
+  { value: "flat_lay", label: "Flat lay" },
 ] as const;
 
 /**
@@ -57,9 +57,9 @@ export const GARMENT_TYPES = [
  * applicarlo sul corpo. NON è persistita (è solo un input per Replicate).
  */
 export const GARMENT_CATEGORIES = [
-  { value: "upper_body", label: "Parte superiore (t-shirt, camicia, giacca…)" },
-  { value: "lower_body", label: "Parte inferiore (pantaloni, gonna…)" },
-  { value: "dresses", label: "Vestito intero" },
+  { value: "upper_body", label: "Parte superiore" },
+  { value: "lower_body", label: "Parte inferiore" },
+  { value: "dresses", label: "Vestito" },
 ] as const;
 
 export type GarmentCategory = (typeof GARMENT_CATEGORIES)[number]["value"];
@@ -84,8 +84,8 @@ export const REPLICATE_PRODUCT_MODEL =
  * value vuoto = usa il default configurato via env (consigliato).
  */
 export const AI_MODEL_PRESETS = [
-  { value: "", label: "Predefinito (consigliato)" },
+  { value: "", label: "Auto" },
   { value: "google/nano-banana-2", label: "Nano Banana 2" },
   { value: "google/nano-banana", label: "Nano Banana" },
-  { value: "cuuupid/idm-vton", label: "IDM-VTON (try-on classico)" },
+  { value: "cuuupid/idm-vton", label: "IDM-VTON" },
 ] as const;

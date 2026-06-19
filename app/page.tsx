@@ -2,8 +2,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   Check,
-  Clock,
   ImageIcon,
+  Layers,
   Shirt,
   Sparkles,
   UserRound,
@@ -65,6 +65,21 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
     <p className="text-brand-400 text-sm font-medium tracking-wide uppercase">
       {children}
     </p>
+  );
+}
+
+function TileBadge({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-brand-400/20 text-brand-400 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium backdrop-blur-sm">
+      {icon}
+      {children}
+    </div>
   );
 }
 
@@ -193,69 +208,79 @@ export default async function HomePage() {
             </h2>
           </Reveal>
 
-          <div className="mt-12 grid gap-4 md:grid-cols-3 md:auto-rows-[220px]">
-            {/* Tile grande: try-on con modello */}
-            <Reveal className="md:col-span-2 md:row-span-2">
-              <InteractiveCard className="h-full min-h-[440px] overflow-hidden rounded-3xl border border-white/10">
+          <div className="mt-12 grid gap-4 md:auto-rows-[260px] md:grid-cols-12">
+            {/* Tile grande: con modello */}
+            <Reveal className="md:col-span-7 md:row-span-2">
+              <InteractiveCard className="group h-full min-h-[460px] overflow-hidden rounded-[1.75rem] border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={IMG.modelA}
                   alt="Modella che indossa un capo generato con AV-VTO"
-                  className="absolute inset-0 size-full object-cover"
+                  className="absolute inset-0 size-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
                 <div className="relative z-[2] flex h-full flex-col justify-end p-8">
-                  <div className="bg-brand-400/20 text-brand-400 mb-3 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium backdrop-blur-sm">
-                    <UserRound className="size-3.5" />
+                  <TileBadge icon={<UserRound className="size-3.5" />}>
                     Con modello
-                  </div>
-                  <h3 className="font-askan max-w-md text-2xl tracking-tight sm:text-3xl">
+                  </TileBadge>
+                  <h3 className="font-askan mt-3 max-w-md text-2xl tracking-tight sm:text-3xl">
                     Il tuo capo, indossato da un modello AI
                   </h3>
                   <p className="mt-2 max-w-md text-sm text-white/70">
                     Posa naturale, luce da studio e fedeltà del capo: lo scatto
-                    da catalogo senza shooting.
+                    da catalogo, senza shooting.
                   </p>
                 </div>
               </InteractiveCard>
             </Reveal>
 
             {/* Tile: packshot */}
-            <Reveal delay={80}>
-              <InteractiveCard className="h-full min-h-[220px] overflow-hidden rounded-3xl border border-white/10">
+            <Reveal className="md:col-span-5" delay={80}>
+              <InteractiveCard className="group h-full min-h-[260px] overflow-hidden rounded-[1.75rem] border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={IMG.packshot}
                   alt="Packshot di un capo su sfondo bianco"
-                  className="absolute inset-0 size-full object-cover"
+                  className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
                 <div className="relative z-[2] flex h-full flex-col justify-end p-6">
-                  <h3 className="font-askan text-xl tracking-tight">
-                    Packshot senza modello
+                  <TileBadge icon={<Shirt className="size-3.5" />}>
+                    Senza modello
+                  </TileBadge>
+                  <h3 className="font-askan mt-3 text-xl tracking-tight">
+                    Packshot su fondo pulito
                   </h3>
-                  <p className="mt-1 text-xs text-white/70">
-                    Capo isolato su fondo pulito, pronto per la scheda prodotto.
+                  <p className="mt-1 text-sm text-white/70">
+                    Capo isolato, pronto per la scheda prodotto.
                   </p>
                 </div>
               </InteractiveCard>
             </Reveal>
 
-            {/* Tile: dato reale */}
-            <Reveal delay={160}>
-              <div className="flex h-full min-h-[220px] flex-col justify-between rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur-md">
-                <div className="brand-gradient inline-flex size-11 items-center justify-center rounded-xl text-white shadow-sm">
-                  <Clock className="size-5" />
-                </div>
-                <div>
-                  <p className="text-3xl font-semibold tracking-tight">
-                    da 4 crediti
+            {/* Tile: variazioni */}
+            <Reveal className="md:col-span-5" delay={160}>
+              <InteractiveCard className="group h-full min-h-[260px] overflow-hidden rounded-[1.75rem] border border-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={IMG.modelB}
+                  alt="Diverse varianti di scatto generate con AV-VTO"
+                  className="absolute inset-0 size-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+                <div className="relative z-[2] flex h-full flex-col justify-end p-6">
+                  <TileBadge icon={<Layers className="size-3.5" />}>
+                    Più varianti
+                  </TileBadge>
+                  <h3 className="font-askan mt-3 text-xl tracking-tight">
+                    Più alternative in un clic
+                  </h3>
+                  <p className="mt-1 text-sm text-white/70">
+                    Genera diverse versioni dello stesso capo e scegli la
+                    migliore.
                   </p>
-                  <p className="mt-1 text-sm text-white/60">
-                    a scatto. Niente set, niente fotografo, nessuna attesa.
-                  </p>
                 </div>
-              </div>
+              </InteractiveCard>
             </Reveal>
           </div>
         </div>

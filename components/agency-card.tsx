@@ -15,8 +15,8 @@ export function AgencyCard() {
   const [imgOk, setImgOk] = useState(true);
   const pathname = usePathname();
 
-  // Sulla landing (hero a tutto schermo) la card darebbe fastidio: nascondila.
-  if (pathname === "/") return null;
+  // Nascondila dove darebbe fastidio: landing (hero) e composer (barra in basso).
+  if (pathname === "/" || pathname === "/dashboard/generations/new") return null;
 
   return (
     <a
