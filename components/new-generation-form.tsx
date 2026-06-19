@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import {
+  AI_MODEL_PRESETS,
   CREDITS_PER_GENERATION,
   CREDITS_PER_PRODUCT_SHOT,
   GARMENT_CATEGORIES,
@@ -84,6 +85,7 @@ export function NewGenerationForm({
     payload.set("garment_type", String(data.get("garment_type") ?? ""));
     payload.set("description", String(data.get("description") ?? ""));
     payload.set("garment_path", path);
+    payload.set("model", String(data.get("model") ?? ""));
     if (withModel) {
       payload.set("model_id", String(data.get("model_id") ?? ""));
       payload.set("category", String(data.get("category") ?? ""));
@@ -208,6 +210,30 @@ export function NewGenerationForm({
           maxLength={200}
         />
       </div>
+
+      <details className="rounded-lg border px-3 py-2">
+        <summary className="text-muted-foreground hover:text-foreground cursor-pointer list-none text-sm transition-colors">
+          Opzioni avanzate
+        </summary>
+        <div className="mt-3 flex flex-col gap-2">
+          <Label htmlFor="model">Modello AI</Label>
+          <select
+            id="model"
+            name="model"
+            defaultValue=""
+            className={selectClass}
+          >
+            {AI_MODEL_PRESETS.map((p) => (
+              <option key={p.value || "default"} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-muted-foreground text-xs">
+            Lascia su “Predefinito” per la qualità migliore.
+          </p>
+        </div>
+      </details>
 
       {error ? (
         <p role="alert" className="text-destructive text-sm" aria-live="polite">

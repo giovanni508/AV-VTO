@@ -1,14 +1,13 @@
-import { REPLICATE_MODEL, REPLICATE_PRODUCT_MODEL } from "@/lib/config";
-
 /**
  * Client minimale per Replicate (senza dipendenze: solo fetch).
  *
- * Usiamo l'endpoint /v1/models/{owner}/{name}/predictions che lancia la
- * predizione sulla versione di default del modello: così non dobbiamo
- * hardcodare hash di versione che cambiano nel tempo.
+ * Risolviamo l'hash di versione del modello e lanciamo /v1/predictions: così
+ * funziona per qualsiasi modello (anche community). Le immagini sono passate
+ * come data URI (base64): nessun bisogno di hosting pubblico.
  *
- * Le immagini sono passate come data URI (base64): nessun bisogno che il
- * modello raggiunga un URL pubblico (utile anche in locale).
+ * Due "motori" supportati:
+ *  - prompt (es. Nano Banana / Gemini): input { prompt, image_input: [...] }
+ *  - vton   (IDM-VTON):                 input { human_img, garm_img, category }
  */
 
 const REPLICATE_API = "https://api.replicate.com/v1";
@@ -30,15 +29,25 @@ type Prediction = {
   urls: { get: string; cancel: string };
 };
 
-export type TryOnInput = {
-  /** Immagine della persona (data URI o URL pubblico). */
+export type TryOnParams = {
+  /** Modello "owner/nome" o "owner/nome:hash". */
+  model: string;
   humanImage: string;
-  /** Immagine del capo (data URI o URL pubblico). */
   garmentImage: string;
-  /** Dove va applicato il capo. */
   category: "upper_body" | "lower_body" | "dresses";
-  /** Descrizione testuale opzionale del capo. */
   description?: string;
+};
+
+export type ProductParams = {
+  model: string;
+  garmentImage: string;
+  description?: string;
+};
+
+const CATEGORY_WORDS: Record<string, string> = {
+  upper_body: "an upper-body garment (top)",
+  lower_body: "a lower-body garment (bottoms)",
+  dresses: "a dress",
 };
 
 function authToken(): string {
@@ -51,38 +60,84 @@ function authToken(): string {
   return token;
 }
 
-/**
- * Genera un'immagine di Virtual Try-On (capo indossato dal modello) e ritorna
- * l'URL del risultato.
- */
-export async function generateTryOn(input: TryOnInput): Promise<string> {
-  const prediction = await runModel(REPLICATE_MODEL, {
-    human_img: input.humanImage,
-    garm_img: input.garmentImage,
-    garment_des: input.description || "capo di abbigliamento",
-    category: input.category,
-  });
+function modelPath(model: string): string {
+  return model.split(":")[0];
+}
+function isVtonModel(model: string): boolean {
+  return modelPath(model).endsWith("idm-vton");
+}
+function isBackgroundRemover(model: string): boolean {
+  return modelPath(model).endsWith("background-remover");
+}
+
+function tryOnPrompt(category: string, description?: string): string {
+  return [
+    "Create a photorealistic, professional fashion e-commerce photograph.",
+    "Dress the person shown in the FIRST image with the exact garment shown in the SECOND image,",
+    "preserving the garment's color, pattern, texture, print and design precisely.",
+    `The garment is ${CATEGORY_WORDS[category] ?? "a garment"}.`,
+    "Keep the person's face, body proportions and a natural pose.",
+    "Full-body framing, clean neutral studio background, soft professional lighting, sharp high detail.",
+    description ? `Additional details: ${description}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function productPrompt(description?: string): string {
+  return [
+    "Create a professional e-commerce product photograph of the garment shown in the image.",
+    "Present it as a clean studio packshot on a pure white seamless background,",
+    "soft even lighting with a subtle shadow, centered, no person, ghost-mannequin style,",
+    "true to the original color, pattern, texture and print, sharp high detail.",
+    description ? `Additional details: ${description}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Try-on: capo indossato dal modello. Ritorna l'URL dell'immagine. */
+export async function generateTryOn(params: TryOnParams): Promise<string> {
+  const { model, humanImage, garmentImage, category, description } = params;
+
+  const input = isVtonModel(model)
+    ? {
+        human_img: humanImage,
+        garm_img: garmentImage,
+        garment_des: description || "capo di abbigliamento",
+        category,
+      }
+    : {
+        prompt: tryOnPrompt(category, description),
+        image_input: [humanImage, garmentImage],
+        output_format: "png",
+      };
+
+  const prediction = await runModel(model, input);
+  return extractImageUrl(prediction.output);
+}
+
+/** Packshot senza modello: capo isolato/studio. Ritorna l'URL dell'immagine. */
+export async function generateProductShot(
+  params: ProductParams,
+): Promise<string> {
+  const { model, garmentImage, description } = params;
+
+  const input = isBackgroundRemover(model)
+    ? { image: garmentImage }
+    : {
+        prompt: productPrompt(description),
+        image_input: [garmentImage],
+        output_format: "png",
+      };
+
+  const prediction = await runModel(model, input);
   return extractImageUrl(prediction.output);
 }
 
 /**
- * Genera un packshot e-commerce senza modello: isola il capo rimuovendo lo
- * sfondo. Ritorna l'URL dell'immagine risultante.
- */
-export async function generateProductShot(garmentImage: string): Promise<string> {
-  const prediction = await runModel(REPLICATE_PRODUCT_MODEL, {
-    image: garmentImage,
-  });
-  return extractImageUrl(prediction.output);
-}
-
-/**
- * Risolve l'hash di versione di un modello. Accetta sia "owner/nome" (legge la
- * versione di default via API) sia "owner/nome:hash" (versione fissata).
- *
- * Necessario perché l'endpoint /v1/models/.../predictions vale solo per i
- * modelli "ufficiali"; per quelli della community (es. IDM-VTON) serve la
- * versione esplicita su /v1/predictions, altrimenti si riceve un 404.
+ * Risolve l'hash di versione di un modello. Accetta "owner/nome" (legge la
+ * versione di default via API) o "owner/nome:hash" (versione fissata).
  */
 async function resolveVersion(model: string): Promise<string> {
   const [path, pinned] = model.split(":");
@@ -117,8 +172,6 @@ async function runModel(
     headers: {
       Authorization: `Bearer ${authToken()}`,
       "Content-Type": "application/json",
-      // Chiede a Replicate di attendere (fino a ~60s) prima di rispondere:
-      // spesso la predizione è già pronta e saltiamo del tutto il polling.
       Prefer: "wait",
     },
     body: JSON.stringify({ version, input }),
@@ -166,7 +219,7 @@ async function waitForCompletion(prediction: Prediction): Promise<Prediction> {
   return current;
 }
 
-/** L'output dei modelli è di solito una stringa URL o un array di URL. */
+/** L'output è una stringa URL o un array di URL. */
 function extractImageUrl(output: unknown): string {
   if (typeof output === "string") return output;
   if (Array.isArray(output) && typeof output[0] === "string") return output[0];

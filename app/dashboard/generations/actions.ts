@@ -13,6 +13,8 @@ import {
   GARMENT_CATEGORIES,
   GARMENT_TYPES,
   GENERATION_MODES,
+  REPLICATE_MODEL,
+  REPLICATE_PRODUCT_MODEL,
   STORAGE_BUCKETS,
   type GarmentCategory,
   type GenerationMode,
@@ -61,6 +63,8 @@ export async function createGeneration(
   const category = String(formData.get("category") ?? "");
   const description = String(formData.get("description") ?? "").trim();
   const garmentPath = String(formData.get("garment_path") ?? "");
+  // Override del modello AI (dalla sezione "avanzate", nascosta di default).
+  const modelOverride = String(formData.get("model") ?? "").trim();
 
   if (!isMode(mode)) return { error: "Modalità non valida." };
   if (!isGarmentType(garmentType)) return { error: "Tipo di scatto non valido." };
@@ -72,6 +76,14 @@ export async function createGeneration(
 
   const withModel = mode === "with_model";
   const cost = withModel ? CREDITS_PER_GENERATION : CREDITS_PER_PRODUCT_SHOT;
+
+  // Modello AI da usare: override se valido, altrimenti il default via env.
+  // In modalità packshot un modello "vton" non è adatto: si ripiega sul default.
+  const replicateModel = withModel
+    ? modelOverride || REPLICATE_MODEL
+    : modelOverride && !modelOverride.includes("idm-vton")
+      ? modelOverride
+      : REPLICATE_PRODUCT_MODEL;
 
   if (withModel) {
     if (!modelId) return { error: "Seleziona un modello." };
@@ -112,28 +124,33 @@ export async function createGeneration(
   let outputUrl: string;
   try {
     if (withModel) {
-      const { data: model } = await supabase
+      const { data: aiModel } = await supabase
         .from("ai_models")
         .select("image_url")
         .eq("id", modelId)
         .single();
-      if (!model) return { error: "Modello non trovato." };
+      if (!aiModel) return { error: "Modello non trovato." };
 
       const modelDataUri = await storageObjectToDataUri(
         supabase,
         STORAGE_BUCKETS.models,
-        model.image_url,
+        aiModel.image_url,
       );
       if (!modelDataUri) return { error: "Immagine del modello non leggibile." };
 
       outputUrl = await generateTryOn({
+        model: replicateModel,
         humanImage: modelDataUri,
         garmentImage: garmentDataUri,
         category: category as GarmentCategory,
         description: description || undefined,
       });
     } else {
-      outputUrl = await generateProductShot(garmentDataUri);
+      outputUrl = await generateProductShot({
+        model: replicateModel,
+        garmentImage: garmentDataUri,
+        description: description || undefined,
+      });
     }
   } catch (error) {
     return {
@@ -160,13 +177,19 @@ export async function createGeneration(
   // Scarica il risultato, salvalo nello storage e scrivi l'URL (service_role).
   try {
     const response = await fetch(outputUrl);
+    const contentType = response.headers.get("content-type") || "image/png";
+    const ext = contentType.includes("jpeg") || contentType.includes("jpg")
+      ? "jpg"
+      : contentType.includes("webp")
+        ? "webp"
+        : "png";
     const resultBuffer = Buffer.from(await response.arrayBuffer());
-    const resultPath = `${user.id}/${generation.id}.png`;
+    const resultPath = `${user.id}/${generation.id}.${ext}`;
 
     await admin.storage
       .from(STORAGE_BUCKETS.generations)
       .upload(resultPath, resultBuffer, {
-        contentType: "image/png",
+        contentType,
         upsert: true,
       });
 

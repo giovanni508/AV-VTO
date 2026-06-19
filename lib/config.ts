@@ -62,15 +62,27 @@ export const GARMENT_CATEGORIES = [
 export type GarmentCategory = (typeof GARMENT_CATEGORIES)[number]["value"];
 
 /**
- * Modello Replicate per il try-on con modello. Default: IDM-VTON.
- * Sovrascrivibile via env `REPLICATE_MODEL` ("owner/nome") senza toccare il codice.
+ * Modello Replicate per il try-on con modello. Default: Nano Banana
+ * (Google Gemini 2.5 Flash Image) — qualità fotorealistica.
+ * Sovrascrivibile via env `REPLICATE_MODEL` ("owner/nome" o "owner/nome:hash").
  */
 export const REPLICATE_MODEL =
-  process.env.REPLICATE_MODEL ?? "cuuupid/idm-vton";
+  process.env.REPLICATE_MODEL ?? "google/nano-banana";
 
 /**
- * Modello Replicate per il packshot senza modello (rimozione sfondo -> capo
- * isolato, pronto per e-commerce). Sovrascrivibile via `REPLICATE_PRODUCT_MODEL`.
+ * Modello Replicate per il packshot senza modello. Default: Nano Banana.
+ * Sovrascrivibile via `REPLICATE_PRODUCT_MODEL`.
  */
 export const REPLICATE_PRODUCT_MODEL =
-  process.env.REPLICATE_PRODUCT_MODEL ?? "851-labs/background-remover";
+  process.env.REPLICATE_PRODUCT_MODEL ?? "google/nano-banana";
+
+/**
+ * Preset di modelli AI selezionabili dalla sezione "avanzate" del form.
+ * value vuoto = usa il default configurato via env (consigliato).
+ */
+export const AI_MODEL_PRESETS = [
+  { value: "", label: "Predefinito (consigliato)" },
+  { value: "google/nano-banana", label: "Nano Banana" },
+  { value: "google/nano-banana-2", label: "Nano Banana 2" },
+  { value: "cuuupid/idm-vton", label: "IDM-VTON (try-on classico)" },
+] as const;

@@ -12,6 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { CountUp } from "@/components/count-up";
+import { CreditsChart } from "@/components/credits-chart";
 import { EmptyState } from "@/components/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
@@ -26,12 +27,18 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   const uid = user!.id;
 
+  // Inizio finestra grafico: 30 giorni fa, a mezzanotte.
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  since.setDate(since.getDate() - 29);
+
   // Tutte le query rispettano la RLS: solo i dati dell'utente corrente.
   const [
     { data: profile },
     { count: modelsCount },
     { count: generationsCount },
     { data: costs },
+    { data: usage },
     { data: recentGenerations },
     { data: recentModels },
   ] = await Promise.all([
@@ -45,6 +52,10 @@ export default async function DashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", uid),
     supabase.from("generations").select("cost_in_credits"),
+    supabase
+      .from("generations")
+      .select("cost_in_credits, created_at")
+      .gte("created_at", since.toISOString()),
     supabase
       .from("generations")
       .select("id, garment_type, generated_image_url, created_at")
@@ -61,6 +72,24 @@ export default async function DashboardPage() {
     (sum, row) => sum + (row.cost_in_credits ?? 0),
     0,
   );
+
+  // Aggrega l'uso crediti per giorno (30 bucket) per il grafico.
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(since);
+    d.setDate(since.getDate() + i);
+    return {
+      key: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" }),
+      value: 0,
+    };
+  });
+  const indexByKey = new Map(days.map((d, i) => [d.key, i]));
+  for (const row of usage ?? []) {
+    const key = new Date(row.created_at).toISOString().slice(0, 10);
+    const idx = indexByKey.get(key);
+    if (idx != null) days[idx].value += row.cost_in_credits ?? 0;
+  }
+  const chartData = days.map((d) => ({ label: d.label, value: d.value }));
 
   const generations = await Promise.all(
     (recentGenerations ?? []).map(async (g) => ({
@@ -131,10 +160,22 @@ export default async function DashboardPage() {
         ))}
       </div>
 
+      {/* Grafico uso crediti */}
+      <section
+        className="animate-fade-up bg-card rounded-xl border p-5 shadow-sm"
+        style={{ animationDelay: "300ms" }}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">Uso crediti</h2>
+          <span className="text-muted-foreground text-xs">Ultimi 30 giorni</span>
+        </div>
+        <CreditsChart data={chartData} />
+      </section>
+
       {/* Ultimi shooting */}
       <section
         className="animate-fade-up flex flex-col gap-4"
-        style={{ animationDelay: "320ms" }}
+        style={{ animationDelay: "380ms" }}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">Ultimi shooting</h2>
