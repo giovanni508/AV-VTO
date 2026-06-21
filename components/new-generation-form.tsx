@@ -7,6 +7,7 @@ import {
   Minus,
   Plus,
   Shirt,
+  SlidersHorizontal,
   Sparkles,
   UserRound,
   Wand2,
@@ -63,6 +64,35 @@ function PillSelect({
   );
 }
 
+function FieldSelect({
+  label,
+  name,
+  defaultValue,
+  children,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-white/60">{label}</span>
+      <span className="relative inline-flex">
+        <select
+          aria-label={label}
+          name={name}
+          defaultValue={defaultValue}
+          className="w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-white/5 py-2 pr-8 pl-3 text-sm text-white outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#2fa0f7]/60 [&>option]:bg-[#0b1020]"
+        >
+          {children}
+        </select>
+        <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-white/50" />
+      </span>
+    </label>
+  );
+}
+
 export function NewGenerationForm({
   models,
   userId,
@@ -81,6 +111,7 @@ export function NewGenerationForm({
   const [quantity, setQuantity] = useState(1);
   const [garmentFile, setGarmentFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const withModel = mode === "with_model";
@@ -194,115 +225,139 @@ export function NewGenerationForm({
           />
         </div>
 
-        {/* Controlli: lane scrollabile + bottone Genera fisso a destra */}
+        {/* Controlli: lane corta + Opzioni + Genera, tutto su una riga */}
         <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
           <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-0.5">
-          {/* Modalità */}
-          <div className="inline-flex rounded-full border border-white/10 bg-white/5 p-0.5 text-xs">
-            <button
-              type="button"
-              onClick={() => setMode("with_model")}
-              aria-pressed={withModel}
-              className={cn(
-                "flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors",
-                withModel
-                  ? "brand-gradient text-white"
-                  : "text-white/65 hover:text-white",
-              )}
-            >
-              <UserRound className="size-3.5" />
-              Con modello
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("no_model")}
-              aria-pressed={!withModel}
-              className={cn(
-                "flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors",
-                !withModel
-                  ? "brand-gradient text-white"
-                  : "text-white/65 hover:text-white",
-              )}
-            >
-              <Shirt className="size-3.5" />
-              Senza modello
-            </button>
-          </div>
+            {/* Modalità */}
+            <div className="inline-flex shrink-0 rounded-full border border-white/10 bg-white/5 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setMode("with_model")}
+                aria-pressed={withModel}
+                className={cn(
+                  "flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors",
+                  withModel
+                    ? "brand-gradient text-white"
+                    : "text-white/65 hover:text-white",
+                )}
+              >
+                <UserRound className="size-3.5" />
+                Con modello
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("no_model")}
+                aria-pressed={!withModel}
+                className={cn(
+                  "flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 font-medium transition-colors",
+                  !withModel
+                    ? "brand-gradient text-white"
+                    : "text-white/65 hover:text-white",
+                )}
+              >
+                <Shirt className="size-3.5" />
+                Senza modello
+              </button>
+            </div>
 
-          {/* Modello (con modello) */}
-          {withModel ? (
-            noModels ? (
-              <Link
-                href="/dashboard/models"
-                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10"
+            {/* Modello (con modello) */}
+            {withModel ? (
+              noModels ? (
+                <Link
+                  href="/dashboard/models"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-dashed border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10"
+                >
+                  <Plus className="size-3.5" />
+                  Aggiungi un modello
+                </Link>
+              ) : (
+                <PillSelect label="Modello" name="model_id">
+                  {models.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name ?? "Senza nome"}
+                    </option>
+                  ))}
+                </PillSelect>
+              )
+            ) : null}
+
+            {/* Variazioni */}
+            <div className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1 py-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                disabled={quantity <= 1}
+                aria-label="Meno variazioni"
+                className="flex size-6 cursor-pointer items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 disabled:opacity-40"
+              >
+                <Minus className="size-3.5" />
+              </button>
+              <span className="min-w-9 text-center font-medium tabular-nums">
+                {quantity}/{MAX_VARIATIONS}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.min(MAX_VARIATIONS, q + 1))}
+                disabled={quantity >= MAX_VARIATIONS}
+                aria-label="Più variazioni"
+                className="flex size-6 cursor-pointer items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 disabled:opacity-40"
               >
                 <Plus className="size-3.5" />
-                Aggiungi un modello
-              </Link>
-            ) : (
-              <PillSelect label="Modello" name="model_id">
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name ?? "Senza nome"}
-                  </option>
-                ))}
-              </PillSelect>
-            )
-          ) : null}
-
-          {/* Categoria (con modello) */}
-          {withModel ? (
-            <PillSelect label="Categoria del capo" name="category">
-              {GARMENT_CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </PillSelect>
-          ) : null}
-
-          {/* Tipo di scatto */}
-          <PillSelect label="Com'è fotografato il capo" name="garment_type">
-            {GARMENT_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </PillSelect>
-
-          {/* Modello AI (avanzato) */}
-          <PillSelect label="Modello AI" name="model" defaultValue="">
-            {AI_MODEL_PRESETS.map((p) => (
-              <option key={p.value || "default"} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </PillSelect>
-
-          {/* Variazioni */}
-          <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1 py-0.5 text-xs">
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={quantity <= 1}
-              aria-label="Meno variazioni"
-              className="flex size-6 cursor-pointer items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 disabled:opacity-40"
-            >
-              <Minus className="size-3.5" />
-            </button>
-            <span className="min-w-9 text-center font-medium tabular-nums">
-              {quantity}/{MAX_VARIATIONS}
-            </span>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.min(MAX_VARIATIONS, q + 1))}
-              disabled={quantity >= MAX_VARIATIONS}
-              aria-label="Più variazioni"
-              className="flex size-6 cursor-pointer items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 disabled:opacity-40"
-            >
-              <Plus className="size-3.5" />
-            </button>
+              </button>
+            </div>
           </div>
+
+          {/* Opzioni: categoria, tipo scatto, modello AI (popover, sempre montato) */}
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setOptionsOpen((o) => !o)}
+              aria-expanded={optionsOpen}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/90 transition-colors hover:bg-white/10"
+            >
+              <SlidersHorizontal className="size-3.5" />
+              <span className="hidden sm:inline">Opzioni</span>
+              <ChevronDown className="size-3.5 text-white/50" />
+            </button>
+            {optionsOpen ? (
+              <div
+                className="fixed inset-0 z-30"
+                aria-hidden
+                onClick={() => setOptionsOpen(false)}
+              />
+            ) : null}
+            <div
+              className={cn(
+                "absolute right-0 bottom-full z-40 mb-2 w-64 max-w-[80vw] rounded-2xl border border-white/10 bg-[#0b1020] p-3 shadow-xl",
+                optionsOpen ? "block" : "hidden",
+              )}
+            >
+              <div className="flex flex-col gap-3">
+                {withModel ? (
+                  <FieldSelect label="Categoria del capo" name="category">
+                    {GARMENT_CATEGORIES.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </FieldSelect>
+                ) : null}
+                <FieldSelect label="Com'è fotografato il capo" name="garment_type">
+                  {GARMENT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </FieldSelect>
+                <FieldSelect label="Modello AI" name="model" defaultValue="">
+                  {AI_MODEL_PRESETS.map((p) => (
+                    <option key={p.value || "default"} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </FieldSelect>
+              </div>
+            </div>
           </div>
 
           {/* Genera (fisso a destra) */}
