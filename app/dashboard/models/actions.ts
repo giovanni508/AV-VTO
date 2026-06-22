@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateModelImage } from "@/lib/replicate";
 import {
+  CREDITS_PER_MODEL_GENERATION,
   MODEL_AGES,
   MODEL_BODY_TYPES,
   MODEL_ETHNICITIES,
@@ -93,6 +94,16 @@ export async function generateModel(
   const name = String(formData.get("name") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
 
+  // Pre-check crediti per non sprecare una chiamata a pagamento.
+  const { data: profile } = await supabase
+    .from("users")
+    .select("credits_balance")
+    .eq("id", user.id)
+    .single();
+  if (!profile || profile.credits_balance < CREDITS_PER_MODEL_GENERATION) {
+    return { error: "Crediti insufficienti per generare un modello." };
+  }
+
   const prompt = [
     `Ultra-photorealistic full-body fashion studio photograph of a ${age} ${ethnicity} ${gender} fashion model`,
     `with ${hairLength} ${hairColor} hair and a ${body} build,`,
@@ -115,6 +126,18 @@ export async function generateModel(
         error instanceof Error
           ? error.message
           : "Generazione del modello non riuscita. Riprova.",
+    };
+  }
+
+  // Addebito atomico dei crediti (solo dopo che l'immagine è stata prodotta).
+  const { error: chargeError } = await supabase.rpc("consume_credits", {
+    p_cost: CREDITS_PER_MODEL_GENERATION,
+  });
+  if (chargeError) {
+    return {
+      error: chargeError.message.includes("Crediti insufficienti")
+        ? "Crediti insufficienti per generare un modello."
+        : "Addebito dei crediti non riuscito.",
     };
   }
 
@@ -142,6 +165,7 @@ export async function generateModel(
   }
 
   revalidatePath("/dashboard/models");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 

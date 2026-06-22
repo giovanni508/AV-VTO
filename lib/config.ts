@@ -12,6 +12,9 @@ export const CREDITS_PER_PRODUCT_SHOT = 4;
 /** Numero massimo di variazioni generabili in un colpo solo. */
 export const MAX_VARIATIONS = 4;
 
+/** Crediti scalati per generare un modello (persona) con l'AI. */
+export const CREDITS_PER_MODEL_GENERATION = 40;
+
 /**
  * Modalità di generazione:
  *  - with_model: il capo indossato da un modello (Virtual Try-On).

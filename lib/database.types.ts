@@ -102,6 +102,10 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["generations"]["Row"];
       };
+      consume_credits: {
+        Args: { p_cost: number };
+        Returns: undefined;
+      };
     };
     Enums: Record<string, never>;
   };

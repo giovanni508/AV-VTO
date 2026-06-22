@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import {
+  CREDITS_PER_MODEL_GENERATION,
   MODEL_AGES,
   MODEL_BODY_TYPES,
   MODEL_ETHNICITIES,
@@ -108,6 +109,10 @@ export function GenerateModelForm() {
             <Sparkles className="size-4" />
           )}
           {pending ? "Generazione…" : "Genera modello"}
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-xs tabular-nums">
+            <Sparkles className="size-3" />
+            {CREDITS_PER_MODEL_GENERATION}
+          </span>
         </Button>
         {pending ? (
           <span className="text-muted-foreground text-sm">
