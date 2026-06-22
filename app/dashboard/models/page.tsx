@@ -2,12 +2,15 @@ import { Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddModelForm } from "@/components/add-model-form";
+import { AddModelPanel } from "@/components/add-model-panel";
 import { EmptyState } from "@/components/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
 import { STORAGE_BUCKETS } from "@/lib/config";
 import { deleteModel } from "@/app/dashboard/models/actions";
+
+// La generazione del modello chiama Replicate: alziamo il timeout della function.
+export const maxDuration = 60;
 
 export default async function ModelsPage() {
   const supabase = await createClient();
@@ -47,7 +50,7 @@ export default async function ModelsPage() {
           <CardTitle className="text-base">Aggiungi un modello</CardTitle>
         </CardHeader>
         <CardContent>
-          <AddModelForm userId={user!.id} />
+          <AddModelPanel userId={user!.id} />
         </CardContent>
       </Card>
 

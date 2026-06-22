@@ -10,6 +10,8 @@
  *  - vton   (IDM-VTON):                 input { human_img, garm_img, category }
  */
 
+import { REPLICATE_MODEL_GEN } from "@/lib/config";
+
 const REPLICATE_API = "https://api.replicate.com/v1";
 const POLL_INTERVAL_MS = 2_500;
 const TIMEOUT_MS = 110_000;
@@ -132,6 +134,16 @@ export async function generateProductShot(
       };
 
   const prediction = await runModel(model, input);
+  return extractImageUrl(prediction.output);
+}
+
+/** Genera da zero un modello (persona) fotorealistico. Ritorna l'URL. */
+export async function generateModelImage(prompt: string): Promise<string> {
+  const prediction = await runModel(REPLICATE_MODEL_GEN, {
+    prompt,
+    aspect_ratio: "3:4",
+    output_format: "png",
+  });
   return extractImageUrl(prediction.output);
 }
 

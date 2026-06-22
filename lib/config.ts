@@ -89,3 +89,60 @@ export const AI_MODEL_PRESETS = [
   { value: "google/nano-banana", label: "Nano Banana" },
   { value: "cuuupid/idm-vton", label: "IDM-VTON" },
 ] as const;
+
+/** Modello Replicate per generare i modelli (persone) da zero. */
+export const REPLICATE_MODEL_GEN =
+  process.env.REPLICATE_MODEL_GEN ?? "google/nano-banana-2";
+
+/**
+ * Opzioni per la generazione di un modello (persona). Ogni opzione ha la sua
+ * traduzione inglese (`prompt`) usata per costruire il prompt fotorealistico.
+ */
+export const MODEL_GENDERS = [
+  { value: "donna", label: "Donna", prompt: "female" },
+  { value: "uomo", label: "Uomo", prompt: "male" },
+] as const;
+
+export const MODEL_AGES = [
+  { value: "18-25", label: "18–25 anni", prompt: "in their early twenties" },
+  { value: "26-35", label: "26–35 anni", prompt: "around 30 years old" },
+  { value: "36-45", label: "36–45 anni", prompt: "around 40 years old" },
+  { value: "46-60", label: "46–60 anni", prompt: "in their fifties" },
+  { value: "60+", label: "Oltre 60 anni", prompt: "in their late sixties, elderly" },
+] as const;
+
+export const MODEL_ETHNICITIES = [
+  { value: "caucasica", label: "Caucasica", prompt: "Caucasian" },
+  { value: "nera", label: "Nera / Africana", prompt: "Black African" },
+  { value: "asiatica", label: "Asiatica (Est)", prompt: "East Asian" },
+  { value: "sudasiatica", label: "Sud-asiatica", prompt: "South Asian" },
+  { value: "ispanica", label: "Ispanica / Latina", prompt: "Hispanic Latina" },
+  { value: "mediorientale", label: "Mediorientale", prompt: "Middle Eastern" },
+] as const;
+
+export const MODEL_BODY_TYPES = [
+  { value: "esile", label: "Esile", prompt: "slim" },
+  { value: "atletica", label: "Atletica", prompt: "athletic toned" },
+  { value: "media", label: "Media", prompt: "average" },
+  { value: "curvy", label: "Curvy / Plus-size", prompt: "curvy plus-size" },
+] as const;
+
+export const MODEL_HAIR_COLORS = [
+  { value: "castani", label: "Castani", prompt: "brown" },
+  { value: "neri", label: "Neri", prompt: "black" },
+  { value: "biondi", label: "Biondi", prompt: "blonde" },
+  { value: "rossi", label: "Rossi", prompt: "red" },
+  { value: "grigi", label: "Grigi / Brizzolati", prompt: "grey" },
+] as const;
+
+export const MODEL_HAIR_LENGTHS = [
+  { value: "corti", label: "Corti", prompt: "short" },
+  { value: "medi", label: "Medi", prompt: "medium-length" },
+  { value: "lunghi", label: "Lunghi", prompt: "long" },
+] as const;
+
+export type ModelOptionList = readonly {
+  value: string;
+  label: string;
+  prompt: string;
+}[];
