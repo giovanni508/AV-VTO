@@ -1,13 +1,12 @@
-import { Trash2, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddModelPanel } from "@/components/add-model-panel";
 import { EmptyState } from "@/components/empty-state";
+import { ModelCard } from "@/components/model-card";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
 import { STORAGE_BUCKETS } from "@/lib/config";
-import { deleteModel } from "@/app/dashboard/models/actions";
 
 // La generazione del modello chiama Replicate: alziamo il timeout della function.
 export const maxDuration = 60;
@@ -59,36 +58,10 @@ export default async function ModelsPage() {
           {withThumbs.map((m, i) => (
             <li
               key={m.id}
-              className="group animate-fade-up hover:border-brand-400/60 relative overflow-hidden rounded-lg border transition-all duration-300 hover:shadow-md"
+              className="animate-fade-up"
               style={{ animationDelay: `${i * 50}ms` }}
             >
-              <div className="bg-muted aspect-[3/4] w-full">
-                {m.thumbUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={m.thumbUrl}
-                    alt={m.name ?? "Modello"}
-                    className="size-full object-cover"
-                  />
-                ) : null}
-              </div>
-              <div className="flex items-center justify-between gap-2 p-2">
-                <span className="truncate text-sm font-medium">
-                  {m.name ?? "Senza nome"}
-                </span>
-                <form action={deleteModel}>
-                  <input type="hidden" name="id" value={m.id} />
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Elimina modello"
-                    className="text-muted-foreground hover:text-destructive size-8"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </form>
-              </div>
+              <ModelCard id={m.id} name={m.name} imageUrl={m.thumbUrl} />
             </li>
           ))}
         </ul>
