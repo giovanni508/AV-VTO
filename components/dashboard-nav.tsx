@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { ImageIcon, LayoutDashboard, Users } from "lucide-react";
+import { ImageIcon, LayoutDashboard, UserCog, Users } from "lucide-react";
 
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/dashboard", label: "Panoramica", icon: LayoutDashboard },
   { href: "/dashboard/models", label: "I tuoi modelli", icon: Users },
   { href: "/dashboard/generations", label: "Shooting", icon: ImageIcon },
+  { href: "/dashboard/account", label: "Account", icon: UserCog },
 ];
 
 function NavSpinner({ active }: { active: boolean }) {

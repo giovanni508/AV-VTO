@@ -1,11 +1,13 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
   ImageIcon,
   Layers,
+  Share2,
   Shirt,
+  ShoppingBag,
   Sparkles,
+  Store,
   UserRound,
   Wand2,
 } from "lucide-react";
@@ -13,6 +15,7 @@ import {
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { Reveal } from "@/components/marketing/reveal";
 import { InteractiveCard } from "@/components/marketing/interactive-card";
+import { FaqAccordion } from "@/components/marketing/faq-accordion";
 import { createClient } from "@/lib/supabase/server";
 
 const HERO_VIDEO = "/hero.mp4";
@@ -21,6 +24,8 @@ const IMG = {
   modelA: "/marketing/model-a.png",
   modelB: "/marketing/model-b.png",
   packshot: "/marketing/packshot.png",
+  before: "/marketing/before.png",
+  after: "/marketing/after.png",
 };
 
 const HERO_PILLS = ["Try-on con AI", "Packshot e-commerce", "Pronto in secondi"];
@@ -50,6 +55,24 @@ const MARQUEE = [
   "Pronto in secondi",
   "Per i negozi",
   "Qualità da studio",
+];
+
+const USE_CASES = [
+  {
+    icon: ShoppingBag,
+    title: "E-commerce",
+    text: "Schede prodotto coerenti, con e senza modello, pronte in un attimo.",
+  },
+  {
+    icon: Share2,
+    title: "Social & ADV",
+    text: "Creatività sempre fresche per post e campagne, senza nuovi shooting.",
+  },
+  {
+    icon: Store,
+    title: "Marketplace",
+    text: "Immagini professionali e conformi per ogni piattaforma di vendita.",
+  },
 ];
 
 function Pill({ children }: { children: React.ReactNode }) {
@@ -89,6 +112,8 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
   const isAuthed = !!user;
+  const ctaHref = isAuthed ? "/dashboard" : "/signup";
+  const ctaLabel = isAuthed ? "Vai alla dashboard" : "Inizia gratis";
 
   return (
     <main className="font-inter bg-[#070b16] text-white">
@@ -154,12 +179,90 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ─────────────────── MARQUEE CINETICO ─────────────────── */}
+      <section className="relative overflow-hidden border-y border-white/10 bg-white/[0.02] py-5">
+        <div className="animate-marquee flex w-max items-center gap-10 pr-10">
+          {[0, 1].map((track) => (
+            <div key={track} className="flex shrink-0 items-center gap-10">
+              {MARQUEE.map((word) => (
+                <span
+                  key={word}
+                  className="font-askan flex items-center gap-10 text-xl tracking-tight text-white/40"
+                >
+                  {word}
+                  <span className="bg-brand-400 size-1.5 rounded-full" />
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─────────────────── TRASFORMAZIONE (prima / dopo) ─────────────────── */}
+      <section
+        id="trasformazione"
+        className="relative overflow-hidden px-6 py-24 sm:px-10 lg:px-12"
+      >
+        <div className="pointer-events-none absolute top-0 left-1/2 size-[42rem] -translate-x-1/2 rounded-full bg-[#2fa0f7]/10 blur-3xl" />
+        <div className="relative mx-auto max-w-[1100px]">
+          <Reveal className="max-w-2xl">
+            <Eyebrow>La trasformazione</Eyebrow>
+            <h2 className="font-askan mt-3 text-3xl leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
+              Dal capo allo shooting, in un istante.
+            </h2>
+            <p className="mt-4 text-white/60">
+              Carica la foto del capo che hai già: l&apos;AI lo fa indossare a un
+              modello, con posa e luce da catalogo. Stesso capo, risultato da
+              servizio fotografico.
+            </p>
+          </Reveal>
+
+          <Reveal delay={120} className="mt-10">
+            <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
+              <figure className="relative overflow-hidden rounded-3xl border border-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={IMG.before}
+                  alt="Foto del capo di partenza"
+                  className="aspect-[3/4] w-full object-cover"
+                />
+                <figcaption className="absolute top-4 left-4 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs text-white/90 backdrop-blur-md">
+                  Il capo
+                </figcaption>
+              </figure>
+
+              <div className="flex items-center justify-center">
+                <div className="brand-gradient shadow-brand flex size-12 items-center justify-center rounded-full text-white">
+                  <ArrowRight className="size-5 max-sm:rotate-90" />
+                </div>
+              </div>
+
+              <figure className="relative overflow-hidden rounded-3xl border border-white/10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={IMG.after}
+                  alt="Lo stesso capo indossato da un modello generato"
+                  className="aspect-[3/4] w-full object-cover"
+                />
+                <figcaption className="bg-brand-400/20 text-brand-400 absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium backdrop-blur-md">
+                  <Sparkles className="size-3" />
+                  Lo shooting
+                </figcaption>
+                <div className="absolute bottom-4 left-4 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs text-white/90 backdrop-blur-md">
+                  Generato con AV·VTO
+                </div>
+              </figure>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ─────────────────── COME FUNZIONA (timeline asimmetrica) ─────────────────── */}
       <section
         id="come-funziona"
         className="relative overflow-hidden px-6 py-24 sm:px-10 lg:px-12"
       >
-        <div className="pointer-events-none absolute -top-24 right-0 size-[36rem] rounded-full bg-[#2fa0f7]/10 blur-3xl" />
+        <div className="pointer-events-none absolute top-0 right-0 size-[36rem] rounded-full bg-[#1e3ebe]/20 blur-3xl" />
         <div className="relative mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-[0.85fr_1.15fr]">
           <Reveal className="lg:sticky lg:top-24 lg:self-start">
             <Eyebrow>Come funziona</Eyebrow>
@@ -199,7 +302,6 @@ export default async function HomePage() {
         id="funzionalita"
         className="relative overflow-hidden px-6 py-24 sm:px-10 lg:px-12"
       >
-        <div className="pointer-events-none absolute -bottom-24 left-0 size-[36rem] rounded-full bg-[#1e3ebe]/20 blur-3xl" />
         <div className="relative mx-auto max-w-[1400px]">
           <Reveal>
             <Eyebrow>Funzionalità</Eyebrow>
@@ -209,7 +311,6 @@ export default async function HomePage() {
           </Reveal>
 
           <div className="mt-12 grid gap-4 md:auto-rows-[260px] md:grid-cols-12">
-            {/* Tile grande: con modello */}
             <Reveal className="md:col-span-7 md:row-span-2">
               <InteractiveCard className="group h-full min-h-[460px] overflow-hidden rounded-[1.75rem] border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -234,7 +335,6 @@ export default async function HomePage() {
               </InteractiveCard>
             </Reveal>
 
-            {/* Tile: packshot */}
             <Reveal className="md:col-span-5" delay={80}>
               <InteractiveCard className="group h-full min-h-[260px] overflow-hidden rounded-[1.75rem] border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -258,7 +358,6 @@ export default async function HomePage() {
               </InteractiveCard>
             </Reveal>
 
-            {/* Tile: variazioni */}
             <Reveal className="md:col-span-5" delay={160}>
               <InteractiveCard className="group h-full min-h-[260px] overflow-hidden rounded-[1.75rem] border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -286,73 +385,48 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ─────────────────── MARQUEE CINETICO ─────────────────── */}
-      <section className="relative overflow-hidden border-y border-white/10 bg-white/[0.02] py-5">
-        <div className="animate-marquee flex w-max items-center gap-10 pr-10">
-          {[0, 1].map((track) => (
-            <div key={track} className="flex shrink-0 items-center gap-10">
-              {MARQUEE.map((word) => (
-                <span
-                  key={word}
-                  className="font-askan flex items-center gap-10 text-xl tracking-tight text-white/40"
-                >
-                  {word}
-                  <span className="bg-brand-400 size-1.5 rounded-full" />
-                </span>
+      {/* ─────────────────── PERFETTO PER (casi d'uso) ─────────────────── */}
+      <section className="px-6 py-24 sm:px-10 lg:px-12">
+        <div className="mx-auto max-w-[1400px]">
+          <Reveal>
+            <Eyebrow>Perfetto per</Eyebrow>
+            <h2 className="font-askan mt-3 max-w-2xl text-3xl tracking-tight sm:text-4xl md:text-5xl">
+              Un solo strumento, ovunque vendi.
+            </h2>
+          </Reveal>
+
+          <Reveal delay={100} className="mt-12">
+            <div className="grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-3">
+              {USE_CASES.map((u) => (
+                <div key={u.title} className="bg-[#070b16] p-8">
+                  <div className="brand-gradient inline-flex size-11 items-center justify-center rounded-xl text-white shadow-sm">
+                    <u.icon className="size-5" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold">{u.title}</h3>
+                  <p className="mt-1.5 text-sm text-white/60">{u.text}</p>
+                </div>
               ))}
             </div>
-          ))}
+          </Reveal>
         </div>
       </section>
 
-      {/* ─────────────────── SHOWCASE (asimmetrico + tilt) ─────────────────── */}
-      <section className="px-6 py-24 sm:px-10 lg:px-12">
-        <div className="mx-auto grid max-w-[1400px] items-center gap-10 lg:grid-cols-2">
+      {/* ─────────────────── FAQ ─────────────────── */}
+      <section id="faq" className="px-6 py-24 sm:px-10 lg:px-12">
+        <div className="mx-auto max-w-3xl">
           <Reveal>
-            <Eyebrow>Dal capo allo scatto</Eyebrow>
-            <h2 className="font-askan mt-3 text-3xl leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
-              Senza set, senza fotografo, senza attese.
+            <Eyebrow>Domande</Eyebrow>
+            <h2 className="font-askan mt-3 text-3xl tracking-tight sm:text-4xl md:text-5xl">
+              Tutto quello che ti serve sapere.
             </h2>
-            <ul className="mt-6 flex flex-col gap-3">
-              {[
-                "Carichi una foto del capo che hai già",
-                "Scegli: con modello AI o packshot pulito",
-                "Scarichi l'immagine pronta per l'e-commerce",
-              ].map((t) => (
-                <li key={t} className="flex items-start gap-3 text-white/80">
-                  <span className="bg-brand-400/15 text-brand-400 mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full">
-                    <Check className="size-3" />
-                  </span>
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href={isAuthed ? "/dashboard" : "/signup"}
-              className="brand-gradient mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-medium text-white shadow-lg transition-transform hover:scale-[1.03] active:scale-[0.98]"
-            >
-              {isAuthed ? "Vai alla dashboard" : "Inizia gratis"}
-              <ArrowRight className="size-4" />
-            </Link>
           </Reveal>
-
-          <Reveal delay={120}>
-            <InteractiveCard className="overflow-hidden rounded-3xl border border-white/10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={IMG.modelB}
-                alt="Scatto editoriale generato con AV-VTO"
-                className="aspect-[4/5] w-full object-cover"
-              />
-              <div className="absolute bottom-4 left-4 z-[2] rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white/90 backdrop-blur-md">
-                Generato con AV·VTO
-              </div>
-            </InteractiveCard>
+          <Reveal delay={100} className="mt-10">
+            <FaqAccordion />
           </Reveal>
         </div>
       </section>
 
-      {/* ─────────────────── CTA (bordo conico animato) ─────────────────── */}
+      {/* ─────────────────── CTA FINALE ─────────────────── */}
       <section className="px-6 pb-24 sm:px-10 lg:px-12">
         <Reveal>
           <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[1.75rem] p-px">
@@ -368,10 +442,10 @@ export default async function HomePage() {
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                   <Link
-                    href={isAuthed ? "/dashboard" : "/signup"}
+                    href={ctaHref}
                     className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-gray-900 shadow-lg transition-transform hover:scale-[1.03] active:scale-[0.98]"
                   >
-                    {isAuthed ? "Vai alla dashboard" : "Inizia gratis"}
+                    {ctaLabel}
                     <Sparkles className="size-4" />
                   </Link>
                   {!isAuthed ? (
@@ -390,15 +464,53 @@ export default async function HomePage() {
       </section>
 
       {/* ─────────────────── FOOTER ─────────────────── */}
-      <footer className="border-t border-white/10 px-6 py-8 sm:px-10 lg:px-12">
-        <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-3 text-sm text-white/50 sm:flex-row">
-          <span className="font-askan text-base tracking-wide text-white">
-            AV·VTO
-          </span>
-          <p>
-            © {new Date().getFullYear()} AV·VTO — Virtual Try-On per il tuo
-            negozio.
-          </p>
+      <footer className="border-t border-white/10 px-6 py-12 sm:px-10 lg:px-12">
+        <div className="mx-auto grid max-w-[1400px] gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="lg:col-span-2">
+            <span className="font-askan text-xl tracking-wide text-white">
+              AV·VTO
+            </span>
+            <p className="mt-3 max-w-xs text-sm text-white/50">
+              Shooting di moda generati con l&apos;AI. Il tuo abbigliamento,
+              fotografato senza set.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 text-sm">
+            <span className="font-medium text-white/80">Prodotto</span>
+            <a href="#funzionalita" className="text-white/50 hover:text-white">
+              Funzionalità
+            </a>
+            <a href="#come-funziona" className="text-white/50 hover:text-white">
+              Come funziona
+            </a>
+            <a href="#faq" className="text-white/50 hover:text-white">
+              FAQ
+            </a>
+          </div>
+
+          <div className="flex flex-col gap-3 text-sm">
+            <span className="font-medium text-white/80">Account</span>
+            <Link href="/login" className="text-white/50 hover:text-white">
+              Accedi
+            </Link>
+            <Link href="/signup" className="text-white/50 hover:text-white">
+              Registrati
+            </Link>
+            <a
+              href="https://abbigliamentovincente.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/50 hover:text-white"
+            >
+              Abbigliamento Vincente
+            </a>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-10 flex max-w-[1400px] flex-col items-center justify-between gap-2 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row">
+          <p>© {new Date().getFullYear()} AV·VTO — Virtual Try-On per il tuo negozio.</p>
+          <p>Realizzato da Abbigliamento Vincente.</p>
         </div>
       </footer>
     </main>
