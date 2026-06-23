@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Check,
   ImageIcon,
   Layers,
   Share2,
@@ -10,12 +11,14 @@ import {
   Store,
   UserRound,
   Wand2,
+  X,
 } from "lucide-react";
 
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { Reveal } from "@/components/marketing/reveal";
 import { InteractiveCard } from "@/components/marketing/interactive-card";
 import { FaqAccordion } from "@/components/marketing/faq-accordion";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { createClient } from "@/lib/supabase/server";
 
 const HERO_VIDEO = "/hero.mp4";
@@ -73,6 +76,35 @@ const USE_CASES = [
     title: "Marketplace",
     text: "Immagini professionali e conformi per ogni piattaforma di vendita.",
   },
+];
+
+const GALLERY_ROWS = [
+  [
+    "/marketing/gallery-1.png",
+    "/marketing/gallery-2.png",
+    "/marketing/model-a.png",
+    "/marketing/gallery-3.png",
+  ],
+  [
+    "/marketing/gallery-4.png",
+    "/marketing/gallery-5.png",
+    "/marketing/model-b.png",
+    "/marketing/gallery-6.png",
+  ],
+];
+
+const TRADITIONAL = [
+  "Set, fotografo e modelli da organizzare",
+  "Costi e tempi elevati per ogni collezione",
+  "Giorni o settimane di attesa",
+  "Rigenerare uno scatto significa rifare tutto",
+];
+
+const WITH_AVVTO = [
+  "Tutto online, direttamente dal tuo browser",
+  "Una frazione del costo di un servizio fotografico",
+  "Risultati pronti in pochi secondi",
+  "Nuovi look e variazioni in un clic",
 ];
 
 function Pill({ children }: { children: React.ReactNode }) {
@@ -385,6 +417,41 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ─────────────────── GALLERIA (marquee immagini) ─────────────────── */}
+      <section className="overflow-hidden py-24">
+        <div className="px-6 sm:px-10 lg:px-12">
+          <Reveal className="mx-auto max-w-[1400px]">
+            <Eyebrow>Galleria</Eyebrow>
+            <h2 className="font-askan mt-3 max-w-2xl text-3xl tracking-tight sm:text-4xl md:text-5xl">
+              Scatti generati con AV·VTO.
+            </h2>
+          </Reveal>
+        </div>
+
+        <div className="mt-12 flex flex-col gap-4">
+          {GALLERY_ROWS.map((row, idx) => (
+            <div
+              key={idx}
+              className={
+                idx === 1
+                  ? "animate-marquee flex w-max gap-4 [animation-direction:reverse]"
+                  : "animate-marquee flex w-max gap-4"
+              }
+            >
+              {[...row, ...row].map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={`${idx}-${i}`}
+                  src={src}
+                  alt="Scatto generato con AV-VTO"
+                  className="h-72 w-auto shrink-0 rounded-2xl border border-white/10 object-cover"
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ─────────────────── PERFETTO PER (casi d'uso) ─────────────────── */}
       <section className="px-6 py-24 sm:px-10 lg:px-12">
         <div className="mx-auto max-w-[1400px]">
@@ -406,6 +473,49 @@ export default async function HomePage() {
                   <p className="mt-1.5 text-sm text-white/60">{u.text}</p>
                 </div>
               ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ─────────────────── PERCHÉ AV·VTO (confronto) ─────────────────── */}
+      <section className="relative overflow-hidden px-6 py-24 sm:px-10 lg:px-12">
+        <div className="pointer-events-none absolute bottom-0 left-1/2 size-[40rem] -translate-x-1/2 rounded-full bg-[#2fa0f7]/8 blur-3xl" />
+        <div className="relative mx-auto max-w-[1100px]">
+          <Reveal className="max-w-2xl">
+            <Eyebrow>Perché AV·VTO</Eyebrow>
+            <h2 className="font-askan mt-3 text-3xl leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
+              Lo shooting, senza lo shooting.
+            </h2>
+          </Reveal>
+
+          <Reveal delay={120} className="mt-12 grid gap-4 md:grid-cols-2">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-7">
+              <h3 className="font-medium text-white/70">Shooting tradizionale</h3>
+              <ul className="mt-5 flex flex-col gap-3 text-sm text-white/55">
+                {TRADITIONAL.map((t) => (
+                  <li key={t} className="flex items-start gap-3">
+                    <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/60">
+                      <X className="size-3" />
+                    </span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="border-brand-400/30 bg-brand-400/[0.06] shadow-brand rounded-3xl border p-7">
+              <h3 className="font-medium text-white">Con AV·VTO</h3>
+              <ul className="mt-5 flex flex-col gap-3 text-sm text-white/80">
+                {WITH_AVVTO.map((t) => (
+                  <li key={t} className="flex items-start gap-3">
+                    <span className="bg-brand-400/20 text-brand-400 mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full">
+                      <Check className="size-3" />
+                    </span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
             </div>
           </Reveal>
         </div>
@@ -464,55 +574,7 @@ export default async function HomePage() {
       </section>
 
       {/* ─────────────────── FOOTER ─────────────────── */}
-      <footer className="border-t border-white/10 px-6 py-12 sm:px-10 lg:px-12">
-        <div className="mx-auto grid max-w-[1400px] gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="lg:col-span-2">
-            <span className="font-askan text-xl tracking-wide text-white">
-              AV·VTO
-            </span>
-            <p className="mt-3 max-w-xs text-sm text-white/50">
-              Shooting di moda generati con l&apos;AI. Il tuo abbigliamento,
-              fotografato senza set.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 text-sm">
-            <span className="font-medium text-white/80">Prodotto</span>
-            <a href="#funzionalita" className="text-white/50 hover:text-white">
-              Funzionalità
-            </a>
-            <a href="#come-funziona" className="text-white/50 hover:text-white">
-              Come funziona
-            </a>
-            <a href="#faq" className="text-white/50 hover:text-white">
-              FAQ
-            </a>
-          </div>
-
-          <div className="flex flex-col gap-3 text-sm">
-            <span className="font-medium text-white/80">Account</span>
-            <Link href="/login" className="text-white/50 hover:text-white">
-              Accedi
-            </Link>
-            <Link href="/signup" className="text-white/50 hover:text-white">
-              Registrati
-            </Link>
-            <a
-              href="https://abbigliamentovincente.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/50 hover:text-white"
-            >
-              Abbigliamento Vincente
-            </a>
-          </div>
-        </div>
-
-        <div className="mx-auto mt-10 flex max-w-[1400px] flex-col items-center justify-between gap-2 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row">
-          <p>© {new Date().getFullYear()} AV·VTO — Virtual Try-On per il tuo negozio.</p>
-          <p>Realizzato da Abbigliamento Vincente.</p>
-        </div>
-      </footer>
+      <MarketingFooter />
     </main>
   );
 }

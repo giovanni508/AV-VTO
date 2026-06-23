@@ -14,8 +14,9 @@ function Pinwheel({ className }: { className?: string }) {
 }
 
 const LINKS = [
-  { href: "#funzionalita", label: "Funzionalità" },
-  { href: "#come-funziona", label: "Come funziona" },
+  { href: "/#funzionalita", label: "Funzionalità" },
+  { href: "/prezzi", label: "Prezzi" },
+  { href: "/contatti", label: "Contatti" },
 ];
 
 export function MarketingNav({ isAuthed }: { isAuthed: boolean }) {
