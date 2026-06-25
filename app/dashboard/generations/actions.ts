@@ -10,13 +10,20 @@ import { storageObjectToDataUri } from "@/lib/storage";
 import {
   CREDITS_PER_GENERATION,
   CREDITS_PER_PRODUCT_SHOT,
+  FRAMINGS,
   GARMENT_CATEGORIES,
   GARMENT_TYPES,
   GENERATION_MODES,
+  LIGHTING,
   MAX_VARIATIONS,
+  POSES,
+  PRODUCT_ANGLES,
+  PRODUCT_BACKGROUNDS,
   REPLICATE_MODEL,
   REPLICATE_PRODUCT_MODEL,
+  SCENES,
   STORAGE_BUCKETS,
+  promptFor,
   type GarmentCategory,
   type GenerationMode,
 } from "@/lib/config";
@@ -88,6 +95,20 @@ export async function createGeneration(
   const quantity = Math.min(
     Math.max(parseInt(String(formData.get("quantity") ?? "1"), 10) || 1, 1),
     MAX_VARIATIONS,
+  );
+
+  // Variabili dello scatto (mappate su frammenti di prompt).
+  const pose = promptFor(POSES, String(formData.get("pose") ?? ""));
+  const framing = promptFor(FRAMINGS, String(formData.get("framing") ?? ""));
+  const scene = promptFor(SCENES, String(formData.get("scene") ?? ""));
+  const lighting = promptFor(LIGHTING, String(formData.get("lighting") ?? ""));
+  const productBg = promptFor(
+    PRODUCT_BACKGROUNDS,
+    String(formData.get("product_bg") ?? ""),
+  );
+  const productAngle = promptFor(
+    PRODUCT_ANGLES,
+    String(formData.get("product_angle") ?? ""),
   );
 
   if (!isMode(mode)) return { error: "Modalità non valida." };
@@ -162,11 +183,18 @@ export async function createGeneration(
           garmentImage: garmentDataUri,
           category: category as GarmentCategory,
           description: description || undefined,
+          pose,
+          framing,
+          scene,
+          lighting,
         })
       : generateProductShot({
           model: replicateModel,
           garmentImage: garmentDataUri,
           description: description || undefined,
+          background: productBg,
+          angle: productAngle,
+          lighting,
         }),
   );
   const settled = await Promise.allSettled(tasks);

@@ -38,12 +38,20 @@ export type TryOnParams = {
   garmentImage: string;
   category: "upper_body" | "lower_body" | "dresses";
   description?: string;
+  /** Frammenti di prompt opzionali (inglese) per le variabili dello scatto. */
+  pose?: string;
+  framing?: string;
+  scene?: string;
+  lighting?: string;
 };
 
 export type ProductParams = {
   model: string;
   garmentImage: string;
   description?: string;
+  background?: string;
+  angle?: string;
+  lighting?: string;
 };
 
 const CATEGORY_WORDS: Record<string, string> = {
@@ -72,25 +80,31 @@ function isBackgroundRemover(model: string): boolean {
   return modelPath(model).endsWith("background-remover");
 }
 
-function tryOnPrompt(category: string, description?: string): string {
+function tryOnPrompt(params: TryOnParams): string {
+  const { category, description, pose, framing, scene, lighting } = params;
   return [
     "Create a photorealistic, professional fashion e-commerce photograph.",
     "Dress the person shown in the FIRST image with the exact garment shown in the SECOND image,",
     "preserving the garment's color, pattern, texture, print and design precisely.",
     `The garment is ${CATEGORY_WORDS[category] ?? "a garment"}.`,
-    "Keep the person's face, body proportions and a natural pose.",
-    "Full-body framing, clean neutral studio background, soft professional lighting, sharp high detail.",
+    `The model is ${pose ?? "standing in a natural relaxed pose, facing the camera"}.`,
+    `${framing ?? "full-body framing, head to feet"}.`,
+    `Background: ${scene ?? "clean neutral studio background"}.`,
+    `Lighting: ${lighting ?? "soft even professional studio lighting"}.`,
+    "Keep the person's face and body proportions natural. Sharp high detail, photorealistic.",
     description ? `Additional details: ${description}.` : "",
   ]
     .filter(Boolean)
     .join(" ");
 }
 
-function productPrompt(description?: string): string {
+function productPrompt(params: ProductParams): string {
+  const { description, background, angle, lighting } = params;
   return [
     "Create a professional e-commerce product photograph of the garment shown in the image.",
-    "Present it as a clean studio packshot on a pure white seamless background,",
-    "soft even lighting with a subtle shadow, centered, no person, ghost-mannequin style,",
+    `Present it as a clean studio packshot ${background ?? "on a pure white seamless background"},`,
+    `${angle ?? "front view, straight on"}, no person, ghost-mannequin style,`,
+    `${lighting ?? "soft even lighting"} with a subtle shadow, centered,`,
     "true to the original color, pattern, texture and print, sharp high detail.",
     description ? `Additional details: ${description}.` : "",
   ]
@@ -110,7 +124,7 @@ export async function generateTryOn(params: TryOnParams): Promise<string> {
         category,
       }
     : {
-        prompt: tryOnPrompt(category, description),
+        prompt: tryOnPrompt(params),
         image_input: [humanImage, garmentImage],
         output_format: "png",
       };
@@ -123,12 +137,12 @@ export async function generateTryOn(params: TryOnParams): Promise<string> {
 export async function generateProductShot(
   params: ProductParams,
 ): Promise<string> {
-  const { model, garmentImage, description } = params;
+  const { model, garmentImage } = params;
 
   const input = isBackgroundRemover(model)
     ? { image: garmentImage }
     : {
-        prompt: productPrompt(description),
+        prompt: productPrompt(params),
         image_input: [garmentImage],
         output_format: "png",
       };

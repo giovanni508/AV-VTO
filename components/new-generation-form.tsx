@@ -20,10 +20,16 @@ import {
   AI_MODEL_PRESETS,
   CREDITS_PER_GENERATION,
   CREDITS_PER_PRODUCT_SHOT,
+  FRAMINGS,
   GARMENT_CATEGORIES,
   GARMENT_TYPES,
+  LIGHTING,
   MAX_IMAGE_BYTES,
   MAX_VARIATIONS,
+  POSES,
+  PRODUCT_ANGLES,
+  PRODUCT_BACKGROUNDS,
+  SCENES,
   STORAGE_BUCKETS,
   type GenerationMode,
 } from "@/lib/config";
@@ -155,18 +161,13 @@ export function NewGenerationForm({
       return;
     }
 
-    const payload = new FormData();
-    payload.set("mode", mode);
-    payload.set("quantity", String(quantity));
-    payload.set("garment_type", String(data.get("garment_type") ?? ""));
-    payload.set("description", String(data.get("description") ?? ""));
-    payload.set("model", String(data.get("model") ?? ""));
-    payload.set("garment_path", path);
-    if (withModel) {
-      payload.set("model_id", String(data.get("model_id") ?? ""));
-      payload.set("category", String(data.get("category") ?? ""));
-    }
-    startTransition(() => formAction(payload));
+    // `data` contiene già tutti i select del form (incluse le variabili dello
+    // scatto, montate in base alla modalità). Aggiungiamo solo i campi gestiti
+    // da React (modalità, variazioni) e il riferimento all'immagine caricata.
+    data.set("mode", mode);
+    data.set("quantity", String(quantity));
+    data.set("garment_path", path);
+    startTransition(() => formAction(data));
   }
 
   return (
@@ -328,20 +329,74 @@ export function NewGenerationForm({
             ) : null}
             <div
               className={cn(
-                "absolute right-0 bottom-full z-40 mb-2 w-64 max-w-[80vw] rounded-2xl border border-white/10 bg-[#0b1020] p-3 shadow-xl",
+                "absolute right-0 bottom-full z-40 mb-2 max-h-[60vh] w-72 max-w-[85vw] overflow-y-auto rounded-2xl border border-white/10 bg-[#0b1020] p-3 shadow-xl",
                 optionsOpen ? "block" : "hidden",
               )}
             >
               <div className="flex flex-col gap-3">
                 {withModel ? (
-                  <FieldSelect label="Categoria del capo" name="category">
-                    {GARMENT_CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </FieldSelect>
-                ) : null}
+                  <>
+                    <FieldSelect label="Categoria del capo" name="category">
+                      {GARMENT_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                    <FieldSelect label="Posa del modello" name="pose">
+                      {POSES.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                    <FieldSelect label="Inquadratura" name="framing">
+                      {FRAMINGS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                    <FieldSelect label="Sfondo / scena" name="scene">
+                      {SCENES.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                    <FieldSelect label="Luce" name="lighting">
+                      {LIGHTING.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                  </>
+                ) : (
+                  <>
+                    <FieldSelect label="Sfondo" name="product_bg">
+                      {PRODUCT_BACKGROUNDS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                    <FieldSelect label="Angolazione" name="product_angle">
+                      {PRODUCT_ANGLES.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                    <FieldSelect label="Luce" name="lighting">
+                      {LIGHTING.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </FieldSelect>
+                  </>
+                )}
                 <FieldSelect label="Com'è fotografato il capo" name="garment_type">
                   {GARMENT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>

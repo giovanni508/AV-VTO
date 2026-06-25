@@ -149,3 +149,56 @@ export type ModelOptionList = readonly {
   label: string;
   prompt: string;
 }[];
+
+/** Frammento di prompt (inglese) per il valore scelto; fallback alla prima opzione. */
+export function promptFor(list: ModelOptionList, value: string): string {
+  return (list.find((o) => o.value === value) ?? list[0]).prompt;
+}
+
+// ── Variabili dello shooting CON modello ───────────────────────────────────
+export const POSES = [
+  { value: "frontale", label: "In piedi, frontale", prompt: "standing straight, facing the camera" },
+  { value: "tre_quarti", label: "Tre quarti", prompt: "standing in a relaxed three-quarter pose" },
+  { value: "profilo", label: "Di profilo", prompt: "standing in profile, side view" },
+  { value: "camminata", label: "In camminata", prompt: "walking towards the camera, mid-step" },
+  { value: "mani_tasche", label: "Mani in tasca", prompt: "standing relaxed with hands in the pockets" },
+  { value: "seduto", label: "Seduto", prompt: "sitting on a simple stool" },
+] as const;
+
+export const FRAMINGS = [
+  { value: "intera", label: "Figura intera", prompt: "full-body framing, head to feet" },
+  { value: "ginocchia", label: "Tre quarti (ginocchia)", prompt: "three-quarter framing, from the knees up" },
+  { value: "mezzo_busto", label: "Mezzo busto", prompt: "waist-up framing" },
+] as const;
+
+export const SCENES = [
+  { value: "studio_neutro", label: "Studio neutro", prompt: "clean neutral studio background" },
+  { value: "bianco", label: "Fondo bianco", prompt: "pure white seamless studio background" },
+  { value: "grigio", label: "Grigio chiaro", prompt: "light grey seamless studio background" },
+  { value: "esterno_urbano", label: "Esterno urbano", prompt: "softly blurred urban street background, outdoors" },
+  { value: "interno_minimal", label: "Interno minimal", prompt: "minimal modern interior background" },
+  { value: "natura", label: "Natura", prompt: "soft natural outdoor background with greenery" },
+] as const;
+
+export const LIGHTING = [
+  { value: "studio_soft", label: "Studio soft", prompt: "soft even professional studio lighting" },
+  { value: "naturale", label: "Luce naturale", prompt: "soft natural daylight" },
+  { value: "drammatica", label: "Drammatica", prompt: "dramatic directional lighting with soft shadows" },
+  { value: "calda", label: "Calda", prompt: "warm golden-hour lighting" },
+] as const;
+
+// ── Variabili del packshot SENZA modello ───────────────────────────────────
+export const PRODUCT_BACKGROUNDS = [
+  { value: "bianco", label: "Bianco puro", prompt: "on a pure white seamless background" },
+  { value: "grigio", label: "Grigio chiaro", prompt: "on a light grey seamless background" },
+  { value: "legno", label: "Legno chiaro", prompt: "on a light wooden surface" },
+  { value: "marmo", label: "Marmo", prompt: "on a white marble surface" },
+  { value: "neutro", label: "Neutro caldo", prompt: "on a warm neutral beige background" },
+] as const;
+
+export const PRODUCT_ANGLES = [
+  { value: "frontale", label: "Frontale", prompt: "front view, straight on" },
+  { value: "tre_quarti", label: "Tre quarti", prompt: "three-quarter angle view" },
+  { value: "flat_lay", label: "Dall'alto (flat lay)", prompt: "top-down flat lay view" },
+  { value: "appeso", label: "Appeso", prompt: "hanging on a clothes hanger" },
+] as const;
