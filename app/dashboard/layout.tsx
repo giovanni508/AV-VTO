@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Coins } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AccountMenu } from "@/components/account-menu";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/server";
@@ -40,18 +40,15 @@ export default async function DashboardLayout({
           <Logo />
         </Link>
         <div className="flex items-center gap-3">
-          <span className="brand-gradient shadow-brand-700/30 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm">
+          <Link
+            href="/dashboard/account"
+            className="brand-gradient shadow-brand-700/30 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold text-white shadow-sm transition-transform hover:scale-[1.03]"
+            aria-label="Crediti disponibili, vai all'account"
+          >
             <Coins className="size-4" />
             {credits.toLocaleString("it-IT")}
-          </span>
-          <span className="text-muted-foreground hidden text-sm sm:inline">
-            {profile?.email ?? user.email}
-          </span>
-          <form action="/auth/signout" method="post">
-            <Button type="submit" variant="outline" size="sm">
-              Esci
-            </Button>
-          </form>
+          </Link>
+          <AccountMenu email={profile?.email ?? user.email ?? ""} />
         </div>
       </header>
 
