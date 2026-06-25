@@ -213,19 +213,15 @@ export default async function HomePage() {
 
       {/* ─────────────────── MARQUEE CINETICO ─────────────────── */}
       <section className="relative overflow-hidden border-y border-white/10 bg-white/[0.02] py-5">
-        <div className="animate-marquee flex w-max items-center gap-10 pr-10">
-          {[0, 1].map((track) => (
-            <div key={track} className="flex shrink-0 items-center gap-10">
-              {MARQUEE.map((word) => (
-                <span
-                  key={word}
-                  className="font-askan flex items-center gap-10 text-xl tracking-tight text-white/40"
-                >
-                  {word}
-                  <span className="bg-brand-400 size-1.5 rounded-full" />
-                </span>
-              ))}
-            </div>
+        <div className="animate-marquee flex w-max items-center">
+          {[...MARQUEE, ...MARQUEE].map((word, i) => (
+            <span
+              key={i}
+              className="font-askan mr-10 flex shrink-0 items-center gap-10 text-xl tracking-tight text-white/40"
+            >
+              {word}
+              <span className="bg-brand-400 size-1.5 rounded-full" />
+            </span>
           ))}
         </div>
       </section>
@@ -434,8 +430,8 @@ export default async function HomePage() {
               key={idx}
               className={
                 idx === 1
-                  ? "animate-marquee flex w-max gap-4 [animation-direction:reverse]"
-                  : "animate-marquee flex w-max gap-4"
+                  ? "animate-marquee flex w-max [animation-direction:reverse]"
+                  : "animate-marquee flex w-max"
               }
             >
               {[...row, ...row].map((src, i) => (
@@ -444,7 +440,7 @@ export default async function HomePage() {
                   key={`${idx}-${i}`}
                   src={src}
                   alt="Scatto generato con AV-VTO"
-                  className="h-72 w-auto shrink-0 rounded-2xl border border-white/10 object-cover"
+                  className="mr-4 h-72 w-auto shrink-0 rounded-2xl border border-white/10 object-cover"
                 />
               ))}
             </div>

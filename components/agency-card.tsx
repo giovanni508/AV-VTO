@@ -6,10 +6,9 @@ import { ArrowUpRight } from "lucide-react";
 
 /**
  * Floating card promozionale dell'agenzia "Abbigliamento Vincente".
- * Sfondo a gradiente di brand; la foto del ragazzo sborda dal bordo superiore.
- *
- * Asset atteso: public/abbigliamento-vincente.png (preferibilmente un PNG
- * ritagliato/trasparente). Se manca, mostra un monogramma "AV" di fallback.
+ * Mostra il logo dell'agenzia su sfondo scuro (il logo è chiaro, quindi
+ * risalta). Asset atteso: public/abbigliamento-vincente.png (logo, idealmente
+ * PNG trasparente). Se manca, mostra un fallback testuale.
  */
 export function AgencyCard() {
   const [imgOk, setImgOk] = useState(true);
@@ -24,34 +23,33 @@ export function AgencyCard() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Scopri l'agenzia Abbigliamento Vincente"
-      className="group animate-float fixed bottom-5 right-5 z-50 hidden sm:block"
+      className="group animate-float fixed right-5 bottom-5 z-50 hidden sm:block"
     >
-      <div className="brand-gradient shadow-brand-700/40 relative w-[212px] overflow-visible rounded-2xl px-4 pt-[4.75rem] pb-4 shadow-xl transition-transform duration-300 group-hover:-translate-y-1">
-        {/* Foto: posizionata in modo che la testa sbordi dal bordo superiore. */}
-        {imgOk ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src="/abbigliamento-vincente.png"
-            alt="Abbigliamento Vincente"
-            onError={() => setImgOk(false)}
-            className="pointer-events-none absolute -top-12 left-1/2 w-[156px] -translate-x-1/2 select-none drop-shadow-2xl transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="pointer-events-none absolute -top-9 left-1/2 flex size-20 -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-lg">
-            <span className="text-gradient text-2xl font-extrabold tracking-tight">
-              AV
-            </span>
-          </div>
-        )}
+      <div className="shadow-brand-700/30 relative w-[212px] overflow-hidden rounded-2xl border border-white/10 bg-[#0b1020] p-4 shadow-xl transition-transform duration-300 group-hover:-translate-y-1">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(20rem_8rem_at_50%_-20%,rgba(47,160,247,0.3),transparent)]" />
 
-        <div className="relative text-white">
-          <p className="text-[11px] font-medium tracking-wide text-white/75 uppercase">
-            Realizzato da
-          </p>
-          <p className="text-base leading-tight font-semibold">
-            Abbigliamento Vincente
-          </p>
-          <span className="mt-2.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium backdrop-blur-sm transition-colors group-hover:bg-white/25">
+        <div className="relative flex flex-col items-center gap-3 text-center">
+          {imgOk ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src="/abbigliamento-vincente.png"
+              alt="Abbigliamento Vincente"
+              onError={() => setImgOk(false)}
+              className="h-20 w-auto object-contain"
+            />
+          ) : (
+            <div className="flex flex-col items-center py-1">
+              <span className="text-2xl font-extrabold tracking-tight">
+                <span className="text-white/90">A</span>
+                <span className="text-gradient">V</span>
+              </span>
+              <span className="mt-1 text-[10px] tracking-[0.2em] text-white/55 uppercase">
+                Abbigliamento Vincente
+              </span>
+            </div>
+          )}
+
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors group-hover:bg-white/20">
             Scopri l&apos;agenzia
             <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </span>
