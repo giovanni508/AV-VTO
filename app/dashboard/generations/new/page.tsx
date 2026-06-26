@@ -22,7 +22,7 @@ export default async function NewGenerationPage() {
   const [{ data: models }, { data: generations }] = await Promise.all([
     supabase
       .from("ai_models")
-      .select("id, name")
+      .select("id, name, image_url")
       .order("created_at", { ascending: false }),
     supabase
       .from("generations")
@@ -30,6 +30,19 @@ export default async function NewGenerationPage() {
       .order("created_at", { ascending: false })
       .limit(24),
   ]);
+
+  // Miniatura firmata per ogni modello: serve al selettore nel composer.
+  const modelOptions = await Promise.all(
+    (models ?? []).map(async (m) => ({
+      id: m.id,
+      name: m.name,
+      thumbUrl: await createSignedUrl(
+        supabase,
+        STORAGE_BUCKETS.models,
+        m.image_url,
+      ),
+    })),
+  );
 
   const items = await Promise.all(
     (generations ?? []).map(async (g) => ({
@@ -106,7 +119,7 @@ export default async function NewGenerationPage() {
 
       {/* Composer ancorato in basso */}
       <div className="sticky bottom-6 z-20 mt-6">
-        <NewGenerationForm models={models ?? []} userId={user!.id} />
+        <NewGenerationForm models={modelOptions} userId={user!.id} />
       </div>
     </div>
   );

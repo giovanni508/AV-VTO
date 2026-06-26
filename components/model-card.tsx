@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download, Trash2, X } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Check, Download, Pencil, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { deleteModel } from "@/app/dashboard/models/actions";
+import { Spinner } from "@/components/ui/spinner";
+import { deleteModel, renameModel } from "@/app/dashboard/models/actions";
 
 export function ModelCard({
   id,
@@ -16,6 +17,17 @@ export function ModelCard({
   imageUrl: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [renaming, startRename] = useTransition();
+
+  function onRename(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    startRename(async () => {
+      await renameModel(data);
+      setEditing(false);
+    });
+  }
 
   // Chiudi il lightbox con Esc e blocca lo scroll del body mentre è aperto.
   useEffect(() => {
@@ -55,20 +67,69 @@ export function ModelCard({
             />
           ) : null}
         </button>
-        <div className="flex items-center justify-between gap-2 p-2">
-          <span className="truncate text-sm font-medium">{label}</span>
-          <form action={deleteModel}>
-            <input type="hidden" name="id" value={id} />
-            <Button
-              type="submit"
-              variant="ghost"
-              size="icon"
-              aria-label="Elimina modello"
-              className="text-muted-foreground hover:text-destructive size-8"
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </form>
+        <div className="flex items-center justify-between gap-1 p-2">
+          {editing ? (
+            <form onSubmit={onRename} className="flex flex-1 items-center gap-1">
+              <input type="hidden" name="id" value={id} />
+              <input
+                name="name"
+                defaultValue={name ?? ""}
+                autoFocus
+                maxLength={60}
+                placeholder="Nome del modello"
+                aria-label="Nome del modello"
+                className="focus-visible:ring-brand-400/50 w-full min-w-0 rounded-md border px-2 py-1 text-sm outline-none focus-visible:ring-2"
+              />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                disabled={renaming}
+                aria-label="Salva nome"
+                className="text-muted-foreground hover:text-brand-600 size-8 shrink-0"
+              >
+                {renaming ? <Spinner /> : <Check className="size-4" />}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setEditing(false)}
+                aria-label="Annulla"
+                className="text-muted-foreground hover:text-foreground size-8 shrink-0"
+              >
+                <X className="size-4" />
+              </Button>
+            </form>
+          ) : (
+            <>
+              <span className="truncate text-sm font-medium">{label}</span>
+              <div className="flex shrink-0 items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setEditing(true)}
+                  aria-label="Rinomina modello"
+                  className="text-muted-foreground hover:text-foreground size-8"
+                >
+                  <Pencil className="size-4" />
+                </Button>
+                <form action={deleteModel}>
+                  <input type="hidden" name="id" value={id} />
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Elimina modello"
+                    className="text-muted-foreground hover:text-destructive size-8"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </form>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

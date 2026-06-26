@@ -169,6 +169,27 @@ export async function generateModel(
   return { ok: true };
 }
 
+/** Rinomina un modello. Le RLS garantiscono che sia il proprio. */
+export async function renameModel(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!id) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  await supabase
+    .from("ai_models")
+    .update({ name: name || null })
+    .eq("id", id);
+
+  revalidatePath("/dashboard/models");
+  revalidatePath("/dashboard/generations/new");
+}
+
 /** Elimina un modello (riga + file). Le RLS garantiscono che sia il proprio. */
 export async function deleteModel(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");

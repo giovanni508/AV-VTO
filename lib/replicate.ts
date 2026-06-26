@@ -154,13 +154,25 @@ export async function generateProductShot(
 /**
  * Migliora una foto (resa tessuti, dettaglio, nitidezza) tramite upscaler.
  * `image` può essere un data URI o un URL. Ritorna l'URL del risultato.
+ *
+ * Impostazioni volutamente CONSERVATIVE per NON alterare volto e connotati
+ * della persona: `creativity` bassa (poco denoise → resta fedele all'originale)
+ * e `resemblance` alta (ControlNet ancorato alla struttura originale). Il prompt
+ * spinge sulla resa dei tessuti; il negative scoraggia ogni modifica del viso.
  */
 export async function enhanceImage(image: string): Promise<string> {
   const prediction = await runModel(REPLICATE_ENHANCE_MODEL, {
     image,
     scale_factor: 2,
-    creativity: 0.35,
-    resemblance: 0.85,
+    // Bassa creatività = rifinitura, non reinvenzione del volto.
+    creativity: 0.2,
+    // Alta resemblance = ancorata alla foto originale (max 3).
+    resemblance: 1.5,
+    sharpen: 1,
+    prompt:
+      "masterpiece, best quality, highres, detailed fabric texture, realistic clothing material, fine garment detail, preserve the exact same face and identity, <lora:more_details:0.5> <lora:SDXLrender_v2.0:1>",
+    negative_prompt:
+      "(worst quality, low quality, normal quality:2) JuggernautNegative-neg, different face, changed facial features, altered identity, distorted face, deformed face, plastic skin, different person",
     output_format: "png",
   });
   return extractImageUrl(prediction.output);

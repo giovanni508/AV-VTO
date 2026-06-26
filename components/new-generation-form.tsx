@@ -39,34 +39,111 @@ import {
   type GenerationState,
 } from "@/app/dashboard/generations/actions";
 
-type ModelOption = { id: string; name: string | null };
+type ModelOption = {
+  id: string;
+  name: string | null;
+  thumbUrl?: string | null;
+};
 
-const pillSelect =
-  "appearance-none rounded-full border border-white/10 bg-white/5 py-1.5 pr-8 pl-3 text-xs font-medium text-white/90 outline-none transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#2fa0f7]/60 cursor-pointer [&>option]:bg-[#0b1020]";
-
-function PillSelect({
-  label,
-  name,
-  defaultValue,
-  children,
+/** Selettore di modello con miniature (popover ancorato sopra il composer). */
+function ModelPicker({
+  models,
+  value,
+  onChange,
 }: {
-  label: string;
-  name: string;
-  defaultValue?: string;
-  children: React.ReactNode;
+  models: ModelOption[];
+  value: string;
+  onChange: (id: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const selected = models.find((m) => m.id === value) ?? models[0];
+
   return (
-    <span className="relative inline-flex">
-      <select
-        aria-label={label}
-        name={name}
-        defaultValue={defaultValue}
-        className={pillSelect}
+    <div className="relative shrink-0">
+      <input type="hidden" name="model_id" value={value} />
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label="Scegli il modello"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/10 bg-white/5 py-0.5 pr-3 pl-0.5 text-xs font-medium text-white/90 transition-colors hover:bg-white/10"
       >
-        {children}
-      </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-white/50" />
-    </span>
+        <span className="flex size-7 items-center justify-center overflow-hidden rounded-full bg-white/10">
+          {selected?.thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={selected.thumbUrl}
+              alt=""
+              className="size-full object-cover"
+            />
+          ) : (
+            <UserRound className="size-3.5 text-white/60" />
+          )}
+        </span>
+        <span className="max-w-28 truncate">
+          {selected?.name ?? "Senza nome"}
+        </span>
+        <ChevronDown className="size-3.5 text-white/50" />
+      </button>
+
+      {open ? (
+        <div
+          className="fixed inset-0 z-30"
+          aria-hidden
+          onClick={() => setOpen(false)}
+        />
+      ) : null}
+      <div
+        className={cn(
+          "absolute bottom-full left-0 z-40 mb-2 w-72 max-w-[85vw] rounded-2xl border border-white/10 bg-[#0b1020] p-3 shadow-xl",
+          open ? "block" : "hidden",
+        )}
+      >
+        <p className="mb-2 text-xs font-medium text-white/60">
+          Scegli il modello
+        </p>
+        <div className="grid max-h-[50vh] grid-cols-3 gap-2 overflow-y-auto">
+          {models.map((m) => {
+            const active = m.id === value;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => {
+                  onChange(m.id);
+                  setOpen(false);
+                }}
+                aria-pressed={active}
+                className={cn(
+                  "flex flex-col gap-1 rounded-xl border p-1 text-left transition-colors",
+                  active
+                    ? "border-[#2fa0f7] bg-white/10"
+                    : "border-white/10 hover:bg-white/5",
+                )}
+              >
+                <span className="block aspect-[3/4] w-full overflow-hidden rounded-lg bg-white/10">
+                  {m.thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={m.thumbUrl}
+                      alt={m.name ?? "Modello"}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex size-full items-center justify-center">
+                      <UserRound className="size-5 text-white/40" />
+                    </span>
+                  )}
+                </span>
+                <span className="truncate px-0.5 text-[11px] text-white/80">
+                  {m.name ?? "Senza nome"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -114,6 +191,7 @@ export function NewGenerationForm({
   const [uploading, setUploading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [mode, setMode] = useState<GenerationMode>("with_model");
+  const [modelId, setModelId] = useState<string>(models[0]?.id ?? "");
   const [quantity, setQuantity] = useState(1);
   const [garmentFile, setGarmentFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -261,27 +339,6 @@ export function NewGenerationForm({
               </button>
             </div>
 
-            {/* Modello (con modello) */}
-            {withModel ? (
-              noModels ? (
-                <Link
-                  href="/dashboard/models"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-dashed border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10"
-                >
-                  <Plus className="size-3.5" />
-                  Aggiungi un modello
-                </Link>
-              ) : (
-                <PillSelect label="Modello" name="model_id">
-                  {models.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name ?? "Senza nome"}
-                    </option>
-                  ))}
-                </PillSelect>
-              )
-            ) : null}
-
             {/* Variazioni */}
             <div className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1 py-0.5 text-xs">
               <button
@@ -307,6 +364,25 @@ export function NewGenerationForm({
               </button>
             </div>
           </div>
+
+          {/* Modello con miniatura (fuori dalla lane: il popover non viene tagliato) */}
+          {withModel ? (
+            noModels ? (
+              <Link
+                href="/dashboard/models"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-dashed border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/10"
+              >
+                <Plus className="size-3.5" />
+                <span className="hidden sm:inline">Aggiungi un modello</span>
+              </Link>
+            ) : (
+              <ModelPicker
+                models={models}
+                value={modelId}
+                onChange={setModelId}
+              />
+            )
+          ) : null}
 
           {/* Opzioni: categoria, tipo scatto, modello AI (popover, sempre montato) */}
           <div className="relative shrink-0">

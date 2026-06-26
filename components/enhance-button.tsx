@@ -31,7 +31,8 @@ export function EnhanceButton({ id }: { id: string }) {
 
       {pending ? (
         <p className="text-muted-foreground text-xs">
-          Affiniamo resa dei tessuti, dettaglio e nitidezza. ~20 secondi.
+          Affiniamo resa dei tessuti, dettaglio e nitidezza, senza alterare il
+          volto. ~20 secondi.
         </p>
       ) : state?.error ? (
         <p role="alert" className="text-destructive text-xs">
@@ -43,7 +44,8 @@ export function EnhanceButton({ id }: { id: string }) {
         </p>
       ) : (
         <p className="text-muted-foreground text-xs">
-          Più dettaglio e resa dei tessuti, in alta risoluzione.
+          Più dettaglio e resa dei tessuti, in alta risoluzione. Volto e
+          connotati restano invariati.
         </p>
       )}
     </form>
