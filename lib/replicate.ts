@@ -10,7 +10,7 @@
  *  - vton   (IDM-VTON):                 input { human_img, garm_img, category }
  */
 
-import { REPLICATE_MODEL_GEN } from "@/lib/config";
+import { REPLICATE_ENHANCE_MODEL, REPLICATE_MODEL_GEN } from "@/lib/config";
 
 const REPLICATE_API = "https://api.replicate.com/v1";
 const POLL_INTERVAL_MS = 2_500;
@@ -148,6 +148,21 @@ export async function generateProductShot(
       };
 
   const prediction = await runModel(model, input);
+  return extractImageUrl(prediction.output);
+}
+
+/**
+ * Migliora una foto (resa tessuti, dettaglio, nitidezza) tramite upscaler.
+ * `image` può essere un data URI o un URL. Ritorna l'URL del risultato.
+ */
+export async function enhanceImage(image: string): Promise<string> {
+  const prediction = await runModel(REPLICATE_ENHANCE_MODEL, {
+    image,
+    scale_factor: 2,
+    creativity: 0.35,
+    resemblance: 0.85,
+    output_format: "png",
+  });
   return extractImageUrl(prediction.output);
 }
 

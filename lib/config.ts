@@ -15,6 +15,9 @@ export const MAX_VARIATIONS = 4;
 /** Crediti scalati per generare un modello (persona) con l'AI. */
 export const CREDITS_PER_MODEL_GENERATION = 40;
 
+/** Crediti scalati per migliorare la qualità di una foto generata. */
+export const CREDITS_PER_ENHANCEMENT = 5;
+
 /**
  * Modalità di generazione:
  *  - with_model: il capo indossato da un modello (Virtual Try-On).
@@ -96,6 +99,10 @@ export const AI_MODEL_PRESETS = [
 /** Modello Replicate per generare i modelli (persone) da zero. */
 export const REPLICATE_MODEL_GEN =
   process.env.REPLICATE_MODEL_GEN ?? "google/nano-banana-2";
+
+/** Modello Replicate per migliorare/affinare le foto (resa tessuti, dettaglio). */
+export const REPLICATE_ENHANCE_MODEL =
+  process.env.REPLICATE_ENHANCE_MODEL ?? "philz1337x/clarity-upscaler";
 
 /**
  * Opzioni per la generazione di un modello (persona). Ogni opzione ha la sua

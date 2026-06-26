@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Clock, Download } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EnhanceButton } from "@/components/enhance-button";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
 import { GARMENT_TYPES, STORAGE_BUCKETS } from "@/lib/config";
+
+// Il miglioramento foto chiama Replicate (upscaler): può durare ~20-40s.
+export const maxDuration = 60;
 
 const TYPE_LABELS = Object.fromEntries(
   GARMENT_TYPES.map((t) => [t.value, t.label]),
@@ -86,7 +90,7 @@ export default async function GenerationDetailPage({
               Risultato Virtual Try-On
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
             <div className="bg-muted aspect-[3/4] w-full overflow-hidden rounded-md">
               {resultUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -102,6 +106,19 @@ export default async function GenerationDetailPage({
                 </div>
               )}
             </div>
+
+            {resultUrl ? (
+              <div className="flex flex-col gap-3">
+                <EnhanceButton id={generation.id} />
+                <a
+                  href={`${resultUrl}&download`}
+                  className="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1.5 text-sm font-medium"
+                >
+                  <Download className="size-4" />
+                  Scarica foto
+                </a>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

@@ -5,9 +5,14 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateProductShot, generateTryOn } from "@/lib/replicate";
+import {
+  enhanceImage,
+  generateProductShot,
+  generateTryOn,
+} from "@/lib/replicate";
 import { storageObjectToDataUri } from "@/lib/storage";
 import {
+  CREDITS_PER_ENHANCEMENT,
   CREDITS_PER_GENERATION,
   CREDITS_PER_PRODUCT_SHOT,
   FRAMINGS,
@@ -241,4 +246,103 @@ export async function createGeneration(
     redirect(`/dashboard/generations/${ids[0]}`);
   }
   redirect("/dashboard/generations");
+}
+
+export type EnhanceState = { error?: string; ok?: boolean } | undefined;
+
+/**
+ * Migliora la foto di uno shooting già generato (resa tessuti, dettaglio,
+ * nitidezza). Costa CREDITS_PER_ENHANCEMENT crediti, scalati solo a buon fine.
+ */
+export async function enhanceGeneration(
+  _prev: EnhanceState,
+  formData: FormData,
+): Promise<EnhanceState> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { error: "Shooting non valido." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // RLS: la riga torna solo se è dell'utente.
+  const { data: generation } = await supabase
+    .from("generations")
+    .select("id, generated_image_url")
+    .eq("id", id)
+    .single();
+  if (!generation) return { error: "Shooting non trovato." };
+  if (!generation.generated_image_url) {
+    return { error: "Nessuna immagine da migliorare." };
+  }
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("credits_balance")
+    .eq("id", user.id)
+    .single();
+  if (!profile || profile.credits_balance < CREDITS_PER_ENHANCEMENT) {
+    return { error: "Crediti insufficienti per migliorare la foto." };
+  }
+
+  let admin: AdminClient;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return {
+      error:
+        "Server non configurato: imposta SUPABASE_SERVICE_ROLE_KEY nelle variabili d'ambiente.",
+    };
+  }
+
+  const dataUri = await storageObjectToDataUri(
+    supabase,
+    STORAGE_BUCKETS.generations,
+    generation.generated_image_url,
+  );
+  if (!dataUri) return { error: "Immagine non leggibile." };
+
+  let outputUrl: string;
+  try {
+    outputUrl = await enhanceImage(dataUri);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Miglioramento non riuscito. Riprova.",
+    };
+  }
+
+  const { error: chargeError } = await supabase.rpc("consume_credits", {
+    p_cost: CREDITS_PER_ENHANCEMENT,
+  });
+  if (chargeError) {
+    return {
+      error: chargeError.message.includes("Crediti insufficienti")
+        ? "Crediti insufficienti per migliorare la foto."
+        : "Addebito dei crediti non riuscito.",
+    };
+  }
+
+  try {
+    const response = await fetch(outputUrl);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const path = `${user.id}/${generation.id}-hd.png`;
+    await admin.storage
+      .from(STORAGE_BUCKETS.generations)
+      .upload(path, buffer, { contentType: "image/png", upsert: true });
+    await admin
+      .from("generations")
+      .update({ generated_image_url: path })
+      .eq("id", generation.id);
+  } catch {
+    return { error: "Salvataggio dell'immagine migliorata non riuscito." };
+  }
+
+  revalidatePath(`/dashboard/generations/${generation.id}`);
+  revalidatePath("/dashboard/generations");
+  return { ok: true };
 }
