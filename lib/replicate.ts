@@ -10,11 +10,18 @@
  *  - vton   (IDM-VTON):                 input { human_img, garm_img, category }
  */
 
-import { REPLICATE_ENHANCE_MODEL, REPLICATE_MODEL_GEN } from "@/lib/config";
+import {
+  REPLICATE_ENHANCE_MODEL,
+  REPLICATE_MODEL_GEN,
+  REPLICATE_VIDEO_MODEL,
+  VIDEO_RESOLUTION,
+} from "@/lib/config";
 
 const REPLICATE_API = "https://api.replicate.com/v1";
 const POLL_INTERVAL_MS = 2_500;
 const TIMEOUT_MS = 110_000;
+/** I video richiedono più tempo: attesa più lunga (serve Vercel Pro, 300s). */
+const VIDEO_TIMEOUT_MS = 280_000;
 
 type PredictionStatus =
   | "starting"
@@ -188,6 +195,37 @@ export async function generateModelImage(prompt: string): Promise<string> {
   return extractImageUrl(prediction.output);
 }
 
+export type VideoParams = {
+  /** Prima immagine del video (data URI o URL). Se assente: text-to-video. */
+  image?: string;
+  /** Prompt completo (descrizione + movimento di camera). */
+  prompt: string;
+  /** Durata in secondi. */
+  duration: number;
+};
+
+/**
+ * Genera un video (animazione) da un'immagine con Seedance 2.0. Ritorna l'URL
+ * del file video. Nessun audio (loop web silenziosi), rapporto d'aspetto
+ * "adaptive" per rispettare l'orientamento dell'immagine sorgente.
+ */
+export async function generateVideo(params: VideoParams): Promise<string> {
+  const { image, prompt, duration } = params;
+  const prediction = await runModel(
+    REPLICATE_VIDEO_MODEL,
+    {
+      ...(image ? { image } : {}),
+      prompt,
+      duration,
+      resolution: VIDEO_RESOLUTION,
+      aspect_ratio: "adaptive",
+      generate_audio: false,
+    },
+    VIDEO_TIMEOUT_MS,
+  );
+  return extractFileUrl(prediction.output);
+}
+
 /**
  * Risolve l'hash di versione di un modello. Accetta "owner/nome" (legge la
  * versione di default via API) o "owner/nome:hash" (versione fissata).
@@ -217,6 +255,7 @@ async function resolveVersion(model: string): Promise<string> {
 async function runModel(
   model: string,
   input: Record<string, unknown>,
+  timeoutMs: number = TIMEOUT_MS,
 ): Promise<Prediction> {
   const version = await resolveVersion(model);
 
@@ -237,7 +276,10 @@ async function runModel(
     );
   }
 
-  const prediction = await waitForCompletion((await res.json()) as Prediction);
+  const prediction = await waitForCompletion(
+    (await res.json()) as Prediction,
+    timeoutMs,
+  );
 
   if (prediction.status !== "succeeded") {
     throw new Error(
@@ -249,8 +291,11 @@ async function runModel(
   return prediction;
 }
 
-async function waitForCompletion(prediction: Prediction): Promise<Prediction> {
-  const deadline = Date.now() + TIMEOUT_MS;
+async function waitForCompletion(
+  prediction: Prediction,
+  timeoutMs: number = TIMEOUT_MS,
+): Promise<Prediction> {
+  const deadline = Date.now() + timeoutMs;
   let current = prediction;
 
   while (
@@ -277,6 +322,25 @@ function extractImageUrl(output: unknown): string {
   if (typeof output === "string") return output;
   if (Array.isArray(output) && typeof output[0] === "string") return output[0];
   throw new Error("Output del modello in un formato inatteso.");
+}
+
+/**
+ * Come extractImageUrl ma tollera anche output a oggetto (es. { video: "..." }
+ * / { url: "..." }): utile per i modelli video.
+ */
+function extractFileUrl(output: unknown): string {
+  if (typeof output === "string") return output;
+  if (Array.isArray(output)) {
+    const first = output.find((o) => typeof o === "string");
+    if (typeof first === "string") return first;
+  }
+  if (output && typeof output === "object") {
+    const obj = output as Record<string, unknown>;
+    for (const key of ["video", "url", "output", "file"]) {
+      if (typeof obj[key] === "string") return obj[key] as string;
+    }
+  }
+  throw new Error("Output del modello (video) in un formato inatteso.");
 }
 
 function sleep(ms: number): Promise<void> {

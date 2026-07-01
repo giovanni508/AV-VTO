@@ -46,6 +46,7 @@ export const STORAGE_BUCKETS = {
   garments: "garments",
   generations: "generations",
   models: "models",
+  videos: "videos",
 } as const;
 
 /**
@@ -119,6 +120,12 @@ export const MODEL_AGES = [
   { value: "36-45", label: "36–45 anni", prompt: "around 40 years old" },
   { value: "46-60", label: "46–60 anni", prompt: "in their fifties" },
   { value: "60+", label: "Oltre 60 anni", prompt: "in their late sixties, elderly" },
+  // Bambini e ragazzi (per cataloghi di abbigliamento kids). Sempre vestiti,
+  // scatto studio e-commerce adatto alle schede prodotto.
+  { value: "bimbo-3-5", label: "Bambino/a 3–5 anni", prompt: "a young child around 4 years old" },
+  { value: "bimbo-6-9", label: "Bambino/a 6–9 anni", prompt: "a child around 8 years old" },
+  { value: "ragazzo-10-13", label: "Ragazzo/a 10–13 anni", prompt: "a pre-teen around 12 years old" },
+  { value: "ragazzo-14-17", label: "Ragazzo/a 14–17 anni", prompt: "a teenager around 16 years old" },
 ] as const;
 
 export const MODEL_ETHNICITIES = [
@@ -209,3 +216,51 @@ export const PRODUCT_ANGLES = [
   { value: "flat_lay", label: "Dall'alto (flat lay)", prompt: "top-down flat lay view" },
   { value: "appeso", label: "Appeso", prompt: "hanging on a clothes hanger" },
 ] as const;
+
+// ── Generazione video (animazione) ─────────────────────────────────────────
+/**
+ * Modello Replicate per la generazione video. Default: Seedance 2.0 (ByteDance),
+ * image-to-video. Sovrascrivibile via env (es. `bytedance/seedance-2.0-mini`
+ * per dimezzare i costi). La risoluzione di output è fissata a 720p (ottimo per
+ * hero web e animazioni prodotto, il miglior rapporto qualità/costo).
+ */
+export const REPLICATE_VIDEO_MODEL =
+  process.env.REPLICATE_VIDEO_MODEL ?? "bytedance/seedance-2.0";
+
+export const VIDEO_RESOLUTION = process.env.REPLICATE_VIDEO_RESOLUTION ?? "720p";
+
+/**
+ * Movimenti di camera predefiniti. Ogni preset è un frammento di prompt (inglese)
+ * che pilota l'animazione: l'utente sceglie l'effetto, senza dover scrivere nulla.
+ */
+export const CAMERA_MOVES = [
+  { value: "statico", label: "Statico (leggero)", prompt: "static locked-off camera, only very subtle natural movement, no camera motion" },
+  { value: "push_in", label: "Avvicinamento", prompt: "slow smooth cinematic dolly push-in slowly moving toward the subject" },
+  { value: "pull_out", label: "Allontanamento", prompt: "slow smooth dolly pull-out gradually revealing more of the scene" },
+  { value: "pan_dx", label: "Panoramica a destra", prompt: "smooth horizontal camera pan moving to the right" },
+  { value: "pan_sx", label: "Panoramica a sinistra", prompt: "smooth horizontal camera pan moving to the left" },
+  { value: "orbita", label: "Orbita attorno", prompt: "smooth cinematic orbital camera movement slowly circling around the subject" },
+  { value: "tilt_up", label: "Salita verticale", prompt: "slow upward vertical camera tilt rising over the subject" },
+  { value: "ruota_prodotto", label: "Prodotto che ruota", prompt: "the product slowly rotates 360 degrees on a turntable while the camera stays static and centered" },
+] as const;
+
+export type CameraMove = (typeof CAMERA_MOVES)[number]["value"];
+
+/**
+ * Durate video selezionabili e relativo costo in crediti. Il costo copre con
+ * ampio margine il costo Replicate (5s 720p ≈ $0.90, 10s ≈ $1.80) e mantiene
+ * un margine coerente con le altre generazioni.
+ */
+export const VIDEO_DURATIONS = [
+  { value: 5, label: "5 secondi", credits: 50 },
+  { value: 10, label: "10 secondi", credits: 90 },
+] as const;
+
+export type VideoDuration = (typeof VIDEO_DURATIONS)[number]["value"];
+
+/** Crediti per un video della durata indicata (fallback: prima opzione). */
+export function creditsForVideo(duration: number): number {
+  return (
+    VIDEO_DURATIONS.find((d) => d.value === duration) ?? VIDEO_DURATIONS[0]
+  ).credits;
+}

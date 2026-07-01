@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock, Download } from "lucide-react";
+import { ArrowLeft, Clock, Download, Film } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhanceButton } from "@/components/enhance-button";
@@ -109,7 +109,16 @@ export default async function GenerationDetailPage({
 
             {resultUrl ? (
               <div className="flex flex-col gap-3">
-                <EnhanceButton id={generation.id} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <EnhanceButton id={generation.id} />
+                  <Link
+                    href={`/dashboard/videos/new?from=${generation.id}`}
+                    className="border-brand-400/40 text-brand-600 hover:bg-brand-400/10 inline-flex w-fit items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+                  >
+                    <Film className="size-4" />
+                    Anima
+                  </Link>
+                </div>
                 <a
                   href={`${resultUrl}&download`}
                   className="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1.5 text-sm font-medium"

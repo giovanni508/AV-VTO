@@ -91,6 +91,36 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      videos: {
+        Row: {
+          id: string;
+          user_id: string;
+          source_image_url: string | null;
+          video_url: string | null;
+          prompt: string | null;
+          camera_move: string | null;
+          duration: number;
+          resolution: string;
+          cost_in_credits: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          source_image_url?: string | null;
+          video_url?: string | null;
+          prompt?: string | null;
+          camera_move?: string | null;
+          duration?: number;
+          resolution?: string;
+          cost_in_credits?: number;
+          created_at?: string;
+        };
+        Update: {
+          video_url?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
