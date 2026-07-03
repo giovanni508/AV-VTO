@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Download, Film } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhanceButton } from "@/components/enhance-button";
+import { SmoothImage } from "@/components/smooth-image";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
 import { GARMENT_TYPES, STORAGE_BUCKETS } from "@/lib/config";
@@ -73,11 +74,10 @@ export default async function GenerationDetailPage({
           <CardContent>
             <div className="bg-muted aspect-[3/4] w-full overflow-hidden rounded-md">
               {garmentUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <SmoothImage
                   src={garmentUrl}
                   alt="Capo originale"
-                  className="size-full object-cover"
+                  className="size-full"
                 />
               ) : null}
             </div>
@@ -93,11 +93,10 @@ export default async function GenerationDetailPage({
           <CardContent className="flex flex-col gap-4">
             <div className="bg-muted aspect-[3/4] w-full overflow-hidden rounded-md">
               {resultUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <SmoothImage
                   src={resultUrl}
                   alt="Risultato generato"
-                  className="size-full object-cover"
+                  className="size-full"
                 />
               ) : (
                 <div className="text-muted-foreground flex size-full flex-col items-center justify-center gap-2 text-sm">

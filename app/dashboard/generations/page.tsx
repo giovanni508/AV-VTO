@@ -3,6 +3,7 @@ import { Clock, ImageIcon, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
+import { SmoothImage } from "@/components/smooth-image";
 import { createClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "@/lib/storage";
 import { GARMENT_TYPES, STORAGE_BUCKETS } from "@/lib/config";
@@ -74,11 +75,10 @@ export default async function GenerationsPage() {
               >
                 <div className="bg-muted aspect-[3/4] w-full">
                   {g.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <SmoothImage
                       src={g.imageUrl}
                       alt="Shooting generato"
-                      className="size-full object-cover"
+                      className="size-full"
                     />
                   ) : (
                     <div className="text-muted-foreground flex size-full flex-col items-center justify-center gap-2 text-xs">

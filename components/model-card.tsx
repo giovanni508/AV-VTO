@@ -5,6 +5,7 @@ import { Check, Download, Pencil, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { SmoothImage } from "@/components/smooth-image";
 import { deleteModel, renameModel } from "@/app/dashboard/models/actions";
 
 export function ModelCard({
@@ -59,11 +60,10 @@ export function ModelCard({
           className="bg-muted block aspect-[3/4] w-full cursor-pointer"
         >
           {imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <SmoothImage
               src={imageUrl}
               alt={label}
-              className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              className="size-full transition-transform duration-300 group-hover:scale-[1.03]"
             />
           ) : null}
         </button>

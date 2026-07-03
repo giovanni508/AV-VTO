@@ -14,6 +14,7 @@ function Pinwheel({ className }: { className?: string }) {
 }
 
 const LINKS = [
+  { href: "/#esempi", label: "Esempi" },
   { href: "/#funzionalita", label: "Funzionalità" },
   { href: "/prezzi", label: "Prezzi" },
   { href: "/contatti", label: "Contatti" },

@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Check,
+  Film,
   ImageIcon,
   Layers,
   Share2,
@@ -75,6 +76,33 @@ const USE_CASES = [
     icon: Store,
     title: "Marketplace",
     text: "Immagini professionali e conformi per ogni piattaforma di vendita.",
+  },
+];
+
+const EXAMPLES = [
+  {
+    icon: UserRound,
+    tag: "Shooting con modello",
+    title: "Il capo, indossato.",
+    text: "Carichi la foto del capo e l'AI lo fa indossare a un modello, con posa e luce da catalogo.",
+    image: "/marketing/gallery-2.png",
+    alt: "Esempio di shooting con modello generato con AV·VTO",
+  },
+  {
+    icon: Shirt,
+    tag: "Packshot e-commerce",
+    title: "La scheda prodotto, pulita.",
+    text: "Capo isolato su sfondo neutro, ghost mannequin, pronto per e-commerce e marketplace.",
+    image: "/marketing/packshot.png",
+    alt: "Esempio di packshot e-commerce generato con AV·VTO",
+  },
+  {
+    icon: Sparkles,
+    tag: "Modello AI su misura",
+    title: "Il volto del tuo brand.",
+    text: "Genera modelli iper-realistici scegliendo età, etnia, corporatura e stile. Riutilizzabili per sempre.",
+    image: "/marketing/model-a.png",
+    alt: "Esempio di modello AI fotorealistico generato con AV·VTO",
   },
 ];
 
@@ -322,6 +350,87 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ─────────────────── COSA PUOI CREARE (esempi reali) ─────────────────── */}
+      <section
+        id="esempi"
+        className="relative overflow-hidden px-6 py-24 sm:px-10 lg:px-12"
+      >
+        <div className="pointer-events-none absolute bottom-0 left-0 size-[38rem] rounded-full bg-[#1e3ebe]/15 blur-3xl" />
+        <div className="relative mx-auto max-w-[1200px]">
+          <Reveal className="max-w-2xl">
+            <Eyebrow>Cosa puoi creare</Eyebrow>
+            <h2 className="font-askan mt-3 text-3xl leading-[1.1] tracking-tight sm:text-4xl md:text-5xl">
+              Un capo, infiniti contenuti.
+            </h2>
+            <p className="mt-4 text-white/60">
+              Questi non sono mockup: sono esempi generati con AV·VTO. Dalla
+              stessa foto del capo ottieni scatti indossati, packshot, modelli su
+              misura e video.
+            </p>
+          </Reveal>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {EXAMPLES.map((ex, i) => (
+              <Reveal key={ex.title} delay={i * 100}>
+                <figure className="group relative overflow-hidden rounded-3xl border border-white/10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ex.image}
+                    alt={ex.alt}
+                    loading="lazy"
+                    className="aspect-[3/4] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                  <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-md">
+                    <ex.icon className="text-brand-400 size-3.5" />
+                    {ex.tag}
+                  </span>
+                  <figcaption className="absolute right-4 bottom-4 left-4">
+                    <p className="text-lg font-semibold text-white">{ex.title}</p>
+                    <p className="mt-1 text-sm text-white/70">{ex.text}</p>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Video animato: banner full-width con demo live */}
+          <Reveal delay={150} className="mt-5">
+            <div className="group relative overflow-hidden rounded-3xl border border-white/10">
+              <video
+                src={HERO_VIDEO}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="aspect-video w-full object-cover sm:aspect-[21/8]"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+              <div className="absolute inset-0 flex flex-col justify-center p-6 sm:p-10">
+                <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-md">
+                  <Film className="text-brand-400 size-3.5" />
+                  Video animato
+                </span>
+                <p className="font-askan mt-3 max-w-md text-2xl leading-tight tracking-tight text-white sm:text-3xl">
+                  Le tue foto prendono vita.
+                </p>
+                <p className="mt-2 max-w-md text-sm text-white/70 sm:text-base">
+                  Anima uno shooting o una foto prodotto con movimenti di camera
+                  cinematografici: perfetto per le hero dei siti e i social.
+                </p>
+                <Link
+                  href="/signup"
+                  className="brand-gradient mt-5 inline-flex w-fit items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-[1.03] active:scale-[0.98]"
+                >
+                  Prova con le tue foto
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
